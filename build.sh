@@ -6,7 +6,7 @@ cd "$(dirname "$0")"
 {
   cat src/part1.html
   echo '<script>'
-  cat src/data.js src/data2.js src/app.js
+  cat src/data.js src/data2.js src/protocols.js src/app.js
   echo '</script>'
 } > index.html
 tmp="$(mktemp --suffix=.js)"; trap 'rm -f "$tmp"' EXIT

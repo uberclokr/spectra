@@ -138,6 +138,43 @@ select#auth:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 #detail .d-fcc{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line);font-size:12.5px;color:var(--muted)}
 #detail .quirks{margin:8px 0 0;padding-left:18px;font-size:13.5px}
 #detail .quirks li{margin-bottom:5px}
+/* ── protocol encyclopedia ── */
+#detail h4{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+.physics{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin-top:14px;
+  padding-top:12px;border-top:1px dashed var(--line)}
+.physics .phys-txt{flex:1 1 220px;min-width:200px}
+.physics p{font-size:13px;color:var(--ink);margin:0 0 8px;max-width:52ch}
+.pens{display:flex;gap:12px;flex-wrap:wrap}
+.pen{display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--muted)}
+.pdots i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--line);margin-right:2px}
+.pdots i.on{background:var(--accent)}
+.pen-key{font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;margin-bottom:3px}
+.pcard{border:1px solid var(--line);border-radius:9px;padding:13px 15px;margin-top:12px;background:var(--bg)}
+.phead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.pname{font-family:"Bahnschrift","Avenir Next Condensed","Arial Narrow",system-ui,sans-serif;
+  font-size:17px;font-weight:700}
+.psub{font-size:12px;color:var(--muted)}
+.pyear{margin-left:auto;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;color:var(--accent-ink)}
+.modchips{display:flex;gap:5px;flex-wrap:wrap;margin:7px 0 9px}
+.modchips span{font-size:10.5px;letter-spacing:.04em;padding:2px 8px;border-radius:99px;
+  border:1px solid var(--line);color:var(--muted);font-family:ui-monospace,Menlo,Consolas,monospace}
+.statrow{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:9px}
+.statrow span{display:flex;flex-direction:column;font-size:10px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--muted)}
+.statrow b{font-size:13px;letter-spacing:0;text-transform:none;color:var(--ink);
+  font-family:ui-monospace,Menlo,Consolas,monospace;font-variant-numeric:tabular-nums;font-weight:600}
+.pblurb{font-size:13.5px;margin:0 0 10px;max-width:68ch}
+.vizgrid{display:flex;gap:12px;flex-wrap:wrap}
+figure.viz{margin:0;flex:0 1 auto;max-width:100%}
+figure.viz canvas{display:block;border:1px solid var(--line2);border-radius:6px;max-width:100%}
+figure.viz figcaption{font-size:11px;color:var(--muted);margin-top:4px;max-width:300px;line-height:1.4}
+.hist{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line)}
+.hist>div{display:flex;gap:12px;font-size:13px;margin-bottom:5px}
+.hist .hy{font-family:ui-monospace,Menlo,Consolas,monospace;color:var(--accent-ink);
+  flex:0 0 38px;font-variant-numeric:tabular-nums}
+a.listen{display:inline-block;margin-top:12px;font-size:13px;padding:7px 14px;border:1px solid var(--accent);
+  border-radius:7px;color:var(--accent-ink);text-decoration:none}
+a.listen:hover{background:var(--line2)}
 .navbtns{display:flex;gap:6px;margin-top:12px}
 .navbtns button{font:12.5px system-ui;padding:5px 11px;border:1px solid var(--line);border-radius:6px;
   background:none;color:var(--ink);cursor:pointer}

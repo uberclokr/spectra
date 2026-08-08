@@ -15,6 +15,17 @@ const state = {
   hover: null, sel: null, fam: null,
   anim: null,
 };
+let booting = true;
+
+/* ── deep links: #a=<auth>&v=<logA>,<logB>&b=<bandLoHz> ── */
+let hashTimer = null;
+function saveHash(){
+  if (booting) return;
+  let p = "a=" + state.auth + "&v=" + state.view.a.toFixed(4) + "," + state.view.b.toFixed(4);
+  if (state.sel) p += "&b=" + state.sel.lo;
+  history.replaceState(null, "", "#" + p);
+}
+function saveHashSoon(){ clearTimeout(hashTimer); hashTimer = setTimeout(saveHash, 250); }
 
 /* ── theme-reactive colors ── */
 let COLORS = {};
@@ -123,7 +134,7 @@ function build(key){
   $("statline").textContent = state.bands.length + " bands · " + A.country;
   buildChips(); buildLegend(); showAuthCard();
   $("diffkey").style.display = key === "fcc" ? "none" : "flex";
-  renderMini(); requestRender();
+  renderMini(); requestRender(); saveHashSoon();
 }
 
 /* ── geometry ── */
@@ -393,7 +404,7 @@ function clampView(a, b){
 }
 function setView(a, b){
   state.view = clampView(a, b);
-  renderMini(); requestRender();
+  renderMini(); requestRender(); saveHashSoon();
 }
 function zoomAt(x, factor){
   const { a, b } = state.view;
@@ -421,7 +432,7 @@ function flyTo(lo, hi){
     };
     renderMini(); render();
     if (t < 1) state.anim = requestAnimationFrame(step);
-    else state.anim = null;
+    else { state.anim = null; saveHashSoon(); }
   };
   state.anim = requestAnimationFrame(step);
 }
@@ -548,7 +559,7 @@ mini.addEventListener("pointercancel", () => miniDrag = false);
 function selectBand(b){
   state.sel = b;
   if (b) showBandCard(b); else showAuthCard();
-  requestRender();
+  requestRender(); saveHashSoon();
 }
 function psBadge(s){ return isPrimary(s) ? "PRIMARY" : "secondary"; }
 function showBandCard(b){
@@ -576,8 +587,10 @@ function showBandCard(b){
     h += "<div class='d-fcc'><b>FCC table here:</b> " + (b.fcc.nick ? b.fcc.nick + " — " : "") +
          b.fcc.svcs.join(", ") + "</div>";
   }
-  h += "<div class='navbtns'><button id='bprev'>← Previous band</button><button id='bzoom'>Zoom to band</button><button id='bnext'>Next band →</button></div>";
   d.innerHTML = h;
+  renderEncyclopedia(b, d);
+  d.insertAdjacentHTML("beforeend",
+    "<div class='navbtns'><button id='bprev'>← Previous band</button><button id='bzoom'>Zoom to band</button><button id='bnext'>Next band →</button></div>");
   const idx = state.bands.indexOf(b);
   $("bprev").addEventListener("click", () => { const nb = state.bands[idx-1]; if (nb){ selectBand(nb); flyTo(nb.lo, nb.hi); } });
   $("bnext").addEventListener("click", () => { const nb = state.bands[idx+1]; if (nb){ selectBand(nb); flyTo(nb.lo, nb.hi); } });
@@ -721,7 +734,20 @@ new MutationObserver(onTheme).observe(document.documentElement, { attributes: tr
 
 /* ── boot ── */
 readColors(); makePatterns();
-build("fcc");
+const hp = new URLSearchParams(location.hash.slice(1));
+const bootAuth = AUTH[hp.get("a")] ? hp.get("a") : "fcc";
+sel.value = bootAuth;
+build(bootAuth);
 resize();
+{
+  const v = (hp.get("v") || "").split(",");
+  if (v.length === 2 && isFinite(+v[0]) && isFinite(+v[1]) && +v[1] > +v[0]) setView(+v[0], +v[1]);
+  const blo = +hp.get("b");
+  if (blo){
+    const bb = state.bands.find(x => x.lo === blo);
+    if (bb){ selectBand(bb); if (!hp.get("v")) flyTo(bb.lo, bb.hi); }
+  }
+}
+booting = false;
 window.addEventListener("resize", resize);
 new ResizeObserver(() => { if (strip.clientWidth !== W) resize(); }).observe(strip);
