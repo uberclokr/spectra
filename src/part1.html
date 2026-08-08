@@ -47,18 +47,14 @@ body{
 /* ── header ── */
 header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;
   padding:26px 0 14px;border-bottom:2px solid var(--ink)}
-.brand .markwrap{position:relative;display:inline-block;width:max-content;padding-top:23px}
-/* explicit width: an <svg> is a replaced element, so left/right:0 alone would
-   size it from its own aspect ratio instead of filling the wordmark */
-.brand .noise{position:absolute;left:0;top:12px;width:100%;height:11px;color:var(--muted);
-  opacity:.7;pointer-events:none}
+/* Wordmark: keyed slices cut through the letters, widths varying like a
+   gated carrier. Cut positions are computed from measured glyph boxes in
+   keyWordmark() so they slice letter bodies, never amputate a terminal —
+   and stay correct across font fallbacks. */
 .brand h1{font-family:"Bahnschrift","Avenir Next Condensed","Arial Narrow",system-ui,sans-serif;
-  font-size:34px;font-weight:700;letter-spacing:.24em;margin:0;line-height:1}
-.brand h1 .tune{position:relative;color:var(--accent)}
-/* carrier spike, anchored to the T so it can never drift off the letter */
-.brand h1 .tune::before{content:"";position:absolute;left:50%;bottom:calc(100% + 3px);
-  transform:translateX(-50%);width:0;height:0;border-left:4px solid transparent;
-  border-right:4px solid transparent;border-bottom:17px solid var(--accent)}
+  font-size:34px;font-weight:700;letter-spacing:.24em;margin:0;line-height:1;width:max-content;
+  -webkit-mask-size:100% 100%;mask-size:100% 100%;
+  -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}
 .brand .tag{font-size:11px;letter-spacing:.22em;color:var(--muted);text-transform:uppercase;margin-top:6px}
 .authbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .authbar label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
@@ -238,16 +234,7 @@ footer p{max-width:88ch;margin:0 0 6px}
 <div class="wrap">
 <header class="top">
   <div class="brand">
-    <div class="markwrap">
-      <svg class="noise" viewBox="0 0 400 12" preserveAspectRatio="none" aria-hidden="true">
-        <polyline points="0,10 10,11 19,9 28,11 36,10 46,11 55,8 63,11 72,10 82,11 91,9
-          100,11 110,10 119,11 128,9 138,11 147,10 156,11 166,8 175,11 184,10 194,11 203,9
-          212,11 222,10 231,11 240,9 250,11 259,10 268,11 278,9 287,11 296,10 306,11 315,8
-          324,11 334,10 343,11 352,9 362,11 371,10 381,11 390,9 400,11"
-          fill="none" stroke="currentColor" stroke-width="1.1" vector-effect="non-scaling-stroke"/>
-      </svg>
-      <h1>SPEC<span class="tune">T</span>RA</h1>
-    </div>
+    <h1 id="wordmark">SPECTRA</h1>
     <div class="tag">World Frequency Allocations · 3 kHz – 300 GHz</div>
   </div>
   <div class="authbar">

@@ -196,7 +196,7 @@ function applySize(){
   mctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   $("rowbadge").textContent = n === 1 ? "single row" : n + " rows";
 }
-function resize(){ applySize(); renderMini(); requestRender(); }
+function resize(){ applySize(); renderMini(); requestRender(); keyWordmark(); }
 
 /* ── ticks ── */
 function niceTicks(a, b){
@@ -794,6 +794,54 @@ function onTheme(){
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", onTheme);
 new MutationObserver(onTheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
+/* ── wordmark: keyed slices ──
+   Each cut is placed from the measured glyph box, as [letter, centre, width]
+   fractions of that glyph. Letters are sliced through the body; the T is cut
+   on its left arm and the A on its left diagonal so the stem and apex survive. */
+const KEY_CUTS = [
+  [0, .50, .32], [3, .40, .13], [4, .17, .23], [6, .24, .11],
+];
+function keyWordmark(){
+  const el = $("wordmark");
+  if (!el || !CSS.supports("mask-image", "linear-gradient(#000,#000)")) return;
+  const text = el.dataset.txt || el.textContent;
+  if (!el.dataset.txt){
+    el.dataset.txt = text;
+    el.textContent = "";
+    for (const ch of text){
+      const s = document.createElement("span");
+      s.textContent = ch;
+      el.appendChild(s);
+    }
+    el.setAttribute("aria-label", text);
+  }
+  const box = el.getBoundingClientRect();
+  if (!box.width) return;
+  /* letter-spacing inflates each glyph's advance box — take it back off */
+  const ls = parseFloat(getComputedStyle(el).letterSpacing) || 0;
+  const spans = [...el.children];
+  const cuts = [];
+  for (const [i, c, w] of KEY_CUTS){
+    if (!spans[i]) continue;
+    const r = spans[i].getBoundingClientRect();
+    const gw = Math.max(1, r.width - ls);
+    const cx = r.left - box.left + c * gw;
+    const half = Math.max(1.1, w * gw) / 2;
+    cuts.push([(cx - half) / box.width * 100, (cx + half) / box.width * 100]);
+  }
+  cuts.sort((a, b) => a[0] - b[0]);
+  let g = "linear-gradient(90deg", at = 0;
+  for (const [c0, c1] of cuts){
+    const s0 = Math.max(at, c0), s1 = Math.max(s0, c1);
+    g += ", #000 " + at.toFixed(2) + "% " + s0.toFixed(2) + "%";
+    g += ", transparent " + s0.toFixed(2) + "% " + s1.toFixed(2) + "%";
+    at = s1;
+  }
+  g += ", #000 " + at.toFixed(2) + "% 100%)";
+  el.style.webkitMaskImage = g;
+  el.style.maskImage = g;
+}
+
 /* ── boot ── */
 readColors(); makePatterns();
 const hp = new URLSearchParams(location.hash.slice(1));
@@ -811,5 +859,7 @@ resize();
   }
 }
 booting = false;
+keyWordmark();
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(keyWordmark);
 window.addEventListener("resize", resize);
 new ResizeObserver(() => { if (strip.clientWidth !== W) resize(); }).observe(strip);
