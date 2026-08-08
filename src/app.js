@@ -137,30 +137,70 @@ function build(key){
   renderMini(); requestRender(); saveHashSoon();
 }
 
-/* ── geometry ── */
-let W = 0, H = 0, DPR = 1;
-const ROW_ITU = 24, ROW_IEEE = 18, ROW_AXIS = 30, ROW_WAVE = 18, NICK_H = 20;
-function stripTop(){ return ROW_ITU + ROW_IEEE; }
-function stripH(){ return H - stripTop() - ROW_AXIS - ROW_WAVE; }
-function X(logf){ return (logf - state.view.a) / (state.view.b - state.view.a) * W; }
-function Xf(f){ return X(Math.log10(f)); }
-function fAt(x){ return Math.pow(10, state.view.a + x / W * (state.view.b - state.view.a)); }
+/* ── geometry ──
+   Wide views split into up to 3 stacked rows (NTIA-chart style): each row is a
+   contiguous slice of the log-frequency span, so zooming out buys horizontal
+   resolution instead of squeezing everything into one strip. */
+let W = 0, H = 0, DPR = 1, lastN = 0;
+const PIN_H = 25, AX_H = 25, WAVE_H = 17, NICK_H = 20, ROW_GAP = 9;
 
-function resize(){
+function rowCount(){
+  const span = state.view.b - state.view.a;
+  return span >= 5 ? 3 : span >= 2.2 ? 2 : 1;
+}
+/* per-row geometry: log range + the y bands it owns */
+function rowLayout(){
+  const n = lastN || rowCount();
+  const multi = n > 1;
+  const railI = multi ? 17 : 24, railE = multi ? 13 : 18, waveH = multi ? 0 : WAVE_H;
+  const per = (H - (n - 1) * ROW_GAP) / n;
+  const bandH = per - PIN_H - railI - railE - AX_H - waveH;
+  const slice = (state.view.b - state.view.a) / n;
+  const rows = [];
+  for (let r = 0; r < n; r++){
+    const top = r * (per + ROW_GAP);
+    const bandTop = top + PIN_H + railI + railE;
+    rows.push({ r, n, per,
+      a: state.view.a + r * slice, b: state.view.a + (r + 1) * slice,
+      top, pinY: top, railIY: top + PIN_H, railEY: top + PIN_H + railI,
+      railI, railE, waveH, bandTop, bandH, axY: bandTop + bandH });
+  }
+  return rows;
+}
+function rowAtY(y, rows){
+  rows = rows || rowLayout();
+  let best = rows[0], bd = Infinity;
+  for (const rw of rows){
+    if (y >= rw.top && y <= rw.top + rw.per) return rw;
+    const d = y < rw.top ? rw.top - y : y - (rw.top + rw.per);
+    if (d < bd){ bd = d; best = rw; }
+  }
+  return best;
+}
+const XR = (lg, rw) => (lg - rw.a) / (rw.b - rw.a) * W;
+const XFR = (f, rw) => XR(Math.log10(f), rw);
+const fAtRow = (x, rw) => Math.pow(10, rw.a + x / W * (rw.b - rw.a));
+
+function applySize(){
   DPR = window.devicePixelRatio || 1;
   W = strip.clientWidth;
-  H = Math.max(300, Math.min(520, Math.round(window.innerHeight * .48)));
+  const n = rowCount();
+  lastN = n;
+  H = n === 1
+    ? Math.max(300, Math.min(520, Math.round(window.innerHeight * .48)))
+    : Math.max(150 * n + 60, Math.min(190 * n, Math.round(window.innerHeight * .74)));
   strip.style.height = H + "px";
   strip.width = Math.round(W * DPR); strip.height = Math.round(H * DPR);
   sctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   mini.width = Math.round(mini.clientWidth * DPR); mini.height = Math.round(44 * DPR);
   mctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  renderMini(); requestRender();
+  $("rowbadge").textContent = n === 1 ? "single row" : n + " rows";
 }
+function resize(){ applySize(); renderMini(); requestRender(); }
 
 /* ── ticks ── */
-function niceTicks(){
-  const { a, b } = state.view, span = b - a, out = [];
+function niceTicks(a, b){
+  const span = b - a, out = [];
   if (span > .8){
     const mants = span > 4 ? [1] : span > 1.6 ? [1,2,5] : [1,1.5,2,3,4,5,6,7,8,9];
     for (let d = Math.floor(a) - 1; d <= Math.ceil(b); d++)
@@ -187,34 +227,42 @@ function requestRender(){
   requestAnimationFrame(() => { rafPending = false; render(); });
 }
 function render(){
-  const { a, b } = state.view;
+  if (rowCount() !== lastN) applySize();
   sctx.clearRect(0, 0, W, H);
-  const sT = stripTop(), sH = stripH();
+  const rows = rowLayout();
+  for (const rw of rows) renderRow(rw);
+  layoutPins(rows);
+}
+
+function renderRow(rw){
+  const { a, b } = rw;
+  const sT = rw.bandTop, sH = rw.bandH;
+  const Xf = f => XFR(f, rw);
 
   /* ITU + IEEE rails */
-  sctx.font = "700 11px 'Bahnschrift','Avenir Next Condensed','Arial Narrow',system-ui";
+  sctx.font = "700 " + (rw.n > 1 ? 10 : 11) + "px 'Bahnschrift','Avenir Next Condensed','Arial Narrow',system-ui";
   for (const [lo, hi, code, longName] of ITU_BANDS){
     const x0 = Math.max(0, Xf(lo)), x1 = Math.min(W, Xf(hi));
     if (x1 <= 0 || x0 >= W) continue;
     sctx.strokeStyle = COLORS.line;
-    sctx.strokeRect(x0 + .5, .5, x1 - x0, ROW_ITU - 1);
+    sctx.strokeRect(x0 + .5, rw.railIY + .5, x1 - x0, rw.railI - 1);
     sctx.fillStyle = COLORS.muted;
     const w = x1 - x0;
     if (w > 30){
       const label = w > 220 ? code + " · " + longName + " Frequency" : code;
       sctx.textAlign = "center"; sctx.textBaseline = "middle";
-      sctx.fillText(label, (x0 + x1) / 2, ROW_ITU / 2 + 1);
+      sctx.fillText(label, (x0 + x1) / 2, rw.railIY + rw.railI / 2 + 1);
     }
   }
-  sctx.font = "600 10px ui-monospace,Menlo,Consolas,monospace";
+  sctx.font = "600 " + (rw.n > 1 ? 9 : 10) + "px ui-monospace,Menlo,Consolas,monospace";
   for (const [lo, hi, code] of IEEE_BANDS){
     const x0 = Math.max(0, Xf(lo)), x1 = Math.min(W, Xf(hi));
     if (x1 <= 0 || x0 >= W || x1 - x0 < 14) continue;
     sctx.strokeStyle = COLORS.line;
-    sctx.strokeRect(x0 + .5, ROW_ITU + .5, x1 - x0, ROW_IEEE - 1);
+    sctx.strokeRect(x0 + .5, rw.railEY + .5, x1 - x0, rw.railE - 1);
     sctx.fillStyle = COLORS.muted;
     sctx.textAlign = "center"; sctx.textBaseline = "middle";
-    sctx.fillText(code, (x0 + x1) / 2, ROW_ITU + ROW_IEEE / 2 + 1);
+    sctx.fillText(code, (x0 + x1) / 2, rw.railEY + rw.railE / 2 + 1);
   }
 
   /* bands */
@@ -288,21 +336,21 @@ function render(){
     }
   }
 
-  /* selection + hover outline */
+  /* selection + hover outline (only in the row that owns the band) */
   for (const [bnd, wdt] of [[state.sel, 2.5], [state.hover && state.hover.band, 1.5]]){
-    if (!bnd) continue;
-    const x0 = Xf(bnd.lo), x1 = Math.max(Xf(bnd.hi), x0 + 1);
+    if (!bnd || bnd.hi < fLo || bnd.lo > fHi) continue;
+    const x0 = Math.max(Xf(bnd.lo), -2), x1 = Math.min(Math.max(Xf(bnd.hi), x0 + 1), W + 2);
     sctx.strokeStyle = COLORS.accent; sctx.lineWidth = wdt;
     sctx.strokeRect(x0 + wdt/2, sT + wdt/2, x1 - x0 - wdt, sH - wdt);
   }
 
   /* axis */
-  const axY = sT + sH;
+  const axY = rw.axY;
   sctx.strokeStyle = COLORS.ink; sctx.lineWidth = 1;
   sctx.beginPath(); sctx.moveTo(0, axY + .5); sctx.lineTo(W, axY + .5); sctx.stroke();
   sctx.font = "10.5px ui-monospace,Menlo,Consolas,monospace";
   let lastEnd = -1e9;
-  for (const t of niceTicks()){
+  for (const t of niceTicks(a, b)){
     const x = Xf(t.f);
     if (x < -2 || x > W + 2) continue;
     sctx.strokeStyle = COLORS.muted;
@@ -310,62 +358,70 @@ function render(){
     if (t.major){
       const label = fmtFreq(t.f);
       const wpx = sctx.measureText(label).width;
-      if (x - wpx / 2 > lastEnd + 8){
+      /* nudge edge labels inside the canvas so they never clip */
+      const lx = Math.min(Math.max(x, wpx / 2 + 3), W - wpx / 2 - 3);
+      if (lx - wpx / 2 > lastEnd + 8){
         sctx.fillStyle = COLORS.ink;
         sctx.textAlign = "center"; sctx.textBaseline = "top";
-        sctx.fillText(label, x, axY + 9);
-        lastEnd = x + wpx / 2;
+        sctx.fillText(label, lx, axY + 9);
+        lastEnd = lx + wpx / 2;
       }
     }
   }
-  /* wavelength ruler */
-  sctx.font = "10px ui-monospace,Menlo,Consolas,monospace";
-  sctx.fillStyle = COLORS.muted;
-  sctx.textAlign = "center"; sctx.textBaseline = "top";
-  const wlY = axY + ROW_AXIS;
-  let lastW = -1e9;
-  for (let e = 6; e >= -4; e--){
-    const lam = Math.pow(10, e), f = C_LIGHT / lam;
-    const x = Xf(f);
-    if (x < 16 || x > W - 16) continue;
-    const lbl = "λ " + (e >= 3 ? Math.pow(10, e-3) + " km" : e >= 0 ? lam + " m" : e >= -2 ? Math.pow(10, e+2) + " cm" : Math.pow(10, e+3) + " mm");
-    const wpx = sctx.measureText(lbl).width;
-    if (x - wpx/2 > lastW + 10){
-      sctx.strokeStyle = COLORS.line;
-      sctx.beginPath(); sctx.moveTo(x + .5, wlY); sctx.lineTo(x + .5, wlY + 4); sctx.stroke();
-      sctx.fillText(lbl, x, wlY + 4);
-      lastW = x + wpx/2;
+  /* wavelength ruler (single-row views only; λ also lives in the tooltip and card) */
+  if (rw.waveH){
+    sctx.font = "10px ui-monospace,Menlo,Consolas,monospace";
+    sctx.fillStyle = COLORS.muted;
+    sctx.textAlign = "center"; sctx.textBaseline = "top";
+    const wlY = axY + AX_H;
+    let lastW = -1e9;
+    for (let e = 6; e >= -4; e--){
+      const lam = Math.pow(10, e), f = C_LIGHT / lam;
+      const x = Xf(f);
+      if (x < 16 || x > W - 16) continue;
+      const lbl = "λ " + (e >= 3 ? Math.pow(10, e-3) + " km" : e >= 0 ? lam + " m" : e >= -2 ? Math.pow(10, e+2) + " cm" : Math.pow(10, e+3) + " mm");
+      const wpx = sctx.measureText(lbl).width;
+      if (x - wpx/2 > lastW + 10){
+        sctx.strokeStyle = COLORS.line;
+        sctx.beginPath(); sctx.moveTo(x + .5, wlY); sctx.lineTo(x + .5, wlY + 4); sctx.stroke();
+        sctx.fillText(lbl, x, wlY + 4);
+        lastW = x + wpx/2;
+      }
     }
   }
 
-  /* crosshair */
-  if (state.hover){
+  /* crosshair — only in the hovered row */
+  if (state.hover && state.hover.row === rw.r){
     const x = state.hover.x;
     sctx.strokeStyle = COLORS.accent; sctx.lineWidth = 1;
     sctx.setLineDash([3, 3]);
     sctx.beginPath(); sctx.moveTo(x + .5, sT); sctx.lineTo(x + .5, sT + sH); sctx.stroke();
     sctx.setLineDash([]);
   }
-  layoutPins();
 }
 
 /* ── landmark pins ── */
-function layoutPins(){
+function layoutPins(rows){
   pinrow.textContent = "";
-  const placed = [];
+  const placed = rows.map(() => []);
+  let total = 0;
   for (const lm of state.landmarks){
-    const cx = X((Math.log10(lm.lo) + Math.log10(lm.hi)) / 2);
+    const lg = (Math.log10(lm.lo) + Math.log10(lm.hi)) / 2;
+    const rw = rows.find(r => lg >= r.a && lg <= r.b);
+    if (!rw) continue;
+    const cx = XR(lg, rw);
     if (cx < 8 || cx > W - 8) continue;
     const wpx = lm.label.length * 6.4 + 20;
-    if (placed.some(([p0, p1]) => cx - wpx/2 < p1 && cx + wpx/2 > p0)) continue;
-    placed.push([cx - wpx/2, cx + wpx/2]);
+    if (placed[rw.r].some(([p0, p1]) => cx - wpx/2 < p1 && cx + wpx/2 > p0)) continue;
+    placed[rw.r].push([cx - wpx/2, cx + wpx/2]);
     const el = document.createElement("button");
     el.className = "pin"; el.textContent = lm.label;
     el.style.left = cx + "px";
+    el.style.top = (rw.pinY + 3) + "px";
     el.title = fmtFreq(lm.lo) + (lm.hi > lm.lo ? " – " + fmtFreq(lm.hi) : "");
     el.addEventListener("click", () => flyTo(lm.lo, lm.hi));
     pinrow.appendChild(el);
-    if (placed.length > 40) break;
+    if (++total > 60) break;
   }
 }
 
@@ -406,12 +462,15 @@ function setView(a, b){
   state.view = clampView(a, b);
   renderMini(); requestRender(); saveHashSoon();
 }
-function zoomAt(x, factor){
+function zoomAt(x, factor, rw){
   const { a, b } = state.view;
-  const pivot = a + x / W * (b - a);
-  const na = pivot + (a - pivot) * factor;
-  const nb = pivot + (b - pivot) * factor;
-  setView(na, nb);
+  const rows = rowLayout();
+  rw = rw || rows[Math.floor(rows.length / 2)];
+  const pivot = rw.a + x / W * (rw.b - rw.a);   // frequency under the cursor
+  const span = b - a, nspan = Math.max(MIN_SPAN, Math.min(span * factor, LOGMAX - LOGMIN));
+  const frac = (pivot - a) / span;              // hold it at the same place in the view
+  const na = pivot - frac * nspan;
+  setView(na, na + nspan);
 }
 function flyTo(lo, hi){
   let la = Math.log10(lo), lb = Math.log10(Math.max(hi, lo));
@@ -444,7 +503,7 @@ strip.addEventListener("pointerdown", e => {
   strip.setPointerCapture(e.pointerId);
   pointers.set(e.pointerId, { x: e.offsetX, y: e.offsetY });
   moved = false;
-  if (pointers.size === 1) dragStart = { x: e.offsetX, view: { ...state.view } };
+  if (pointers.size === 1) dragStart = { x: e.offsetX, view: { ...state.view }, n: lastN };
   else if (pointers.size === 2){
     const [p1, p2] = [...pointers.values()];
     pinch0 = { d: Math.abs(p1.x - p2.x) || 1, cx: (p1.x + p2.x) / 2, view: { ...state.view } };
@@ -468,8 +527,9 @@ strip.addEventListener("pointermove", e => {
   if (dragStart && pointers.size === 1){
     const dx = e.offsetX - dragStart.x;
     if (Math.abs(dx) > 3) moved = true;
-    const span = dragStart.view.b - dragStart.view.a;
-    const shift = -dx / W * span;
+    /* pan by the row's own slice so content tracks the cursor 1:1 */
+    const slice = (dragStart.view.b - dragStart.view.a) / dragStart.n;
+    const shift = -dx / W * slice;
     setView(dragStart.view.a + shift, dragStart.view.b + shift);
   }
   updateHover(e.offsetX, e.offsetY);
@@ -479,7 +539,8 @@ function endPointer(e){
   if (pointers.size < 2) pinch0 = null;
   if (pointers.size === 0){
     if (!moved && e.type === "pointerup"){
-      const b = findBand(state.bands, fAt(e.offsetX));
+      const rw = rowAtY(e.offsetY);
+      const b = findBand(state.bands, fAtRow(e.offsetX, rw));
       selectBand(b === state.sel ? null : b);
     }
     dragStart = null;
@@ -488,25 +549,25 @@ function endPointer(e){
 strip.addEventListener("pointerup", endPointer);
 strip.addEventListener("pointercancel", endPointer);
 strip.addEventListener("pointerleave", () => {
-  if (pointers.size === 0){ state.hover = null; tooltip.style.display = "none"; readout.style.display = "none"; requestRender(); }
+  if (pointers.size === 0){ state.hover = null; tooltip.style.display = "none"; readout.innerHTML = ""; requestRender(); }
 });
 strip.addEventListener("wheel", e => {
   e.preventDefault();
-  zoomAt(e.offsetX, Math.exp(e.deltaY * .0016));
+  zoomAt(e.offsetX, Math.exp(e.deltaY * .0016), rowAtY(e.offsetY));
   updateHover(e.offsetX, e.offsetY);
 }, { passive: false });
 strip.addEventListener("dblclick", e => {
-  const f = fAt(e.offsetX);
-  const b = findBand(state.bands, f);
+  const rw = rowAtY(e.offsetY);
+  const b = findBand(state.bands, fAtRow(e.offsetX, rw));
   if (b && e.shiftKey === false) flyTo(b.lo, b.hi);
-  else zoomAt(e.offsetX, e.shiftKey ? 3 : 1/3);
+  else zoomAt(e.offsetX, e.shiftKey ? 3 : 1/3, rw);
 });
 
 function updateHover(x, y){
-  const f = fAt(x);
+  const rw = rowAtY(y);
+  const f = fAtRow(x, rw);
   const band = findBand(state.bands, f);
-  state.hover = { x, f, band };
-  readout.style.display = "block";
+  state.hover = { x, y, f, band, row: rw.r };
   readout.innerHTML = "<b>" + fmtFreq(f) + "</b> · λ " + fmtWave(f);
   if (band){
     tooltip.style.display = "block";
@@ -518,19 +579,20 @@ function updateHover(x, y){
     if (band.diff) html += "<div class='tt-more'>≠ FCC table — click to compare</div>";
     else if (band.note) html += "<div class='tt-more'>click for the story</div>";
     tooltip.innerHTML = html;
-    const tw = tooltip.offsetWidth, sw = strip.clientWidth;
+    const tw = tooltip.offsetWidth, th = tooltip.offsetHeight, sw = strip.clientWidth;
     let tx = x + 16; if (tx + tw > sw - 8) tx = x - tw - 16;
+    let ty = y + 18; if (ty + th > H - 4) ty = Math.max(2, y - th - 12);
     tooltip.style.left = Math.max(4, tx) + "px";
-    tooltip.style.top = Math.min(y + 46, H - tooltip.offsetHeight + 20) + "px";
+    tooltip.style.top = ty + "px";
   } else tooltip.style.display = "none";
   requestRender();
 }
 
 /* keyboard */
 strip.addEventListener("keydown", e => {
-  const span = state.view.b - state.view.a;
-  if (e.key === "ArrowLeft"){ setView(state.view.a - span*.12, state.view.b - span*.12); }
-  else if (e.key === "ArrowRight"){ setView(state.view.a + span*.12, state.view.b + span*.12); }
+  const step = (state.view.b - state.view.a) / lastN * .12;
+  if (e.key === "ArrowLeft"){ setView(state.view.a - step, state.view.b - step); }
+  else if (e.key === "ArrowRight"){ setView(state.view.a + step, state.view.b + step); }
   else if (e.key === "+" || e.key === "="){ zoomAt(W/2, .7); }
   else if (e.key === "-" || e.key === "_"){ zoomAt(W/2, 1.4); }
   else if (e.key === "0" || e.key === "Home"){ setView(LOGMIN, LOGMAX); }

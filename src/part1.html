@@ -47,9 +47,18 @@ body{
 /* ── header ── */
 header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;
   padding:26px 0 14px;border-bottom:2px solid var(--ink)}
+.brand .markwrap{position:relative;display:inline-block;width:max-content;padding-top:23px}
+/* explicit width: an <svg> is a replaced element, so left/right:0 alone would
+   size it from its own aspect ratio instead of filling the wordmark */
+.brand .noise{position:absolute;left:0;top:12px;width:100%;height:11px;color:var(--muted);
+  opacity:.7;pointer-events:none}
 .brand h1{font-family:"Bahnschrift","Avenir Next Condensed","Arial Narrow",system-ui,sans-serif;
   font-size:34px;font-weight:700;letter-spacing:.24em;margin:0;line-height:1}
-.brand h1 .tune{color:var(--accent)}
+.brand h1 .tune{position:relative;color:var(--accent)}
+/* carrier spike, anchored to the T so it can never drift off the letter */
+.brand h1 .tune::before{content:"";position:absolute;left:50%;bottom:calc(100% + 3px);
+  transform:translateX(-50%);width:0;height:0;border-left:4px solid transparent;
+  border-right:4px solid transparent;border-bottom:17px solid var(--accent)}
 .brand .tag{font-size:11px;letter-spacing:.22em;color:var(--muted);text-transform:uppercase;margin-top:6px}
 .authbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .authbar label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
@@ -85,20 +94,24 @@ select#auth:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 /* ── scope ── */
 .scope{position:relative;border:1px solid var(--line);border-radius:10px;background:var(--surface);
   box-shadow:var(--shadow);overflow:hidden}
-#pinrow{position:relative;height:34px;border-bottom:1px solid var(--line2)}
-.pin{position:absolute;top:5px;transform:translateX(-50%);font:11.5px system-ui;
-  padding:3px 8px;border-radius:99px;border:1px solid var(--line);background:var(--panel);
-  color:var(--ink);cursor:pointer;white-space:nowrap;line-height:1.2}
-.pin::after{content:"";position:absolute;left:50%;top:100%;width:1px;height:6px;background:var(--muted)}
+.scopebar{display:flex;align-items:center;gap:12px;padding:7px 10px;
+  border-bottom:1px solid var(--line2);background:var(--panel)}
+.scopebar .hint{font-size:11.5px;color:var(--muted)}
+#rowbadge{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+  border:1px solid var(--line);border-radius:99px;padding:2px 9px;white-space:nowrap}
+#readout{margin-left:auto;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;
+  font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
+#readout b{color:var(--accent-ink);font-weight:600}
+.canvaswrap{position:relative}
+#pinrow{position:absolute;inset:0;pointer-events:none;z-index:15}
+.pin{position:absolute;transform:translateX(-50%);font:11.5px system-ui;pointer-events:auto;
+  padding:2px 8px;border-radius:99px;border:1px solid var(--line);background:var(--panel);
+  color:var(--ink);cursor:pointer;white-space:nowrap;line-height:1.25}
+.pin::after{content:"";position:absolute;left:50%;top:100%;width:1px;height:5px;background:var(--muted)}
 .pin:hover{border-color:var(--accent);color:var(--accent-ink)}
 .pin:focus-visible{outline:2px solid var(--accent)}
 #strip{display:block;width:100%;touch-action:none;cursor:crosshair}
 #strip:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
-#readout{position:absolute;right:10px;top:44px;z-index:20;pointer-events:none;display:none;
-  background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);
-  border-radius:6px;padding:6px 10px;font-family:ui-monospace,Menlo,Consolas,monospace;
-  font-size:12.5px;font-variant-numeric:tabular-nums;box-shadow:var(--shadow)}
-#readout b{color:var(--accent-ink);font-weight:600}
 #tooltip{position:absolute;z-index:30;pointer-events:none;display:none;max-width:300px;
   background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);
   padding:9px 12px;font-size:12.5px;line-height:1.45}
@@ -107,13 +120,11 @@ select#auth:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 #tooltip .tt-s{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px}
 #tooltip .sw{width:9px;height:9px;border-radius:2px;flex:0 0 auto}
 #tooltip .tt-more{margin-top:5px;color:var(--muted);font-size:11px;font-style:italic}
-.zoomctl{position:absolute;left:10px;top:44px;z-index:20;display:flex;flex-direction:column;gap:5px}
-.zoomctl button{width:30px;height:30px;border-radius:6px;border:1px solid var(--line);
-  background:var(--panel);color:var(--ink);font:600 15px system-ui;cursor:pointer;line-height:1}
+.zoomctl{display:flex;gap:4px}
+.zoomctl button{width:26px;height:24px;border-radius:5px;border:1px solid var(--line);
+  background:var(--bg);color:var(--ink);font:600 14px system-ui;cursor:pointer;line-height:1}
 .zoomctl button:hover{border-color:var(--accent);color:var(--accent-ink)}
 .zoomctl button:focus-visible{outline:2px solid var(--accent)}
-.hint{position:absolute;left:50px;top:48px;z-index:10;font-size:11.5px;color:var(--muted);pointer-events:none;
-  background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:3px 9px;opacity:.92}
 
 #mini{display:block;width:100%;height:44px;margin-top:8px;border:1px solid var(--line);
   border-radius:8px;background:var(--surface);cursor:pointer;touch-action:none}
@@ -227,8 +238,17 @@ footer p{max-width:88ch;margin:0 0 6px}
 <div class="wrap">
 <header class="top">
   <div class="brand">
-    <h1>SPEC<span class="tune">T</span>RA</h1>
-    <div class="tag">Radio Frequency Allocation Explorer · 3 kHz – 300 GHz</div>
+    <div class="markwrap">
+      <svg class="noise" viewBox="0 0 400 12" preserveAspectRatio="none" aria-hidden="true">
+        <polyline points="0,10 10,11 19,9 28,11 36,10 46,11 55,8 63,11 72,10 82,11 91,9
+          100,11 110,10 119,11 128,9 138,11 147,10 156,11 166,8 175,11 184,10 194,11 203,9
+          212,11 222,10 231,11 240,9 250,11 259,10 268,11 278,9 287,11 296,10 306,11 315,8
+          324,11 334,10 343,11 352,9 362,11 371,10 381,11 390,9 400,11"
+          fill="none" stroke="currentColor" stroke-width="1.1" vector-effect="non-scaling-stroke"/>
+      </svg>
+      <h1>SPEC<span class="tune">T</span>RA</h1>
+    </div>
+    <div class="tag">World Frequency Allocations · 3 kHz – 300 GHz</div>
   </div>
   <div class="authbar">
     <label for="auth">Regulator</label>
@@ -248,16 +268,21 @@ footer p{max-width:88ch;margin:0 0 6px}
 </div>
 
 <div class="scope">
-  <div id="pinrow"></div>
-  <canvas id="strip" tabindex="0" aria-label="Zoomable spectrum allocation chart. Use arrow keys to pan, plus and minus to zoom, 0 to reset."></canvas>
-  <div class="zoomctl">
-    <button id="zin"  title="Zoom in (+)" aria-label="Zoom in">+</button>
-    <button id="zout" title="Zoom out (−)" aria-label="Zoom out">−</button>
-    <button id="zfit" title="Reset view (0)" aria-label="Reset view">⤢</button>
+  <div class="scopebar">
+    <div class="zoomctl">
+      <button id="zout" title="Zoom out (−)" aria-label="Zoom out">−</button>
+      <button id="zin"  title="Zoom in (+)" aria-label="Zoom in">+</button>
+      <button id="zfit" title="Reset view (0)" aria-label="Reset view">⤢</button>
+    </div>
+    <span class="hint">scroll to zoom · drag to pan · click a band</span>
+    <span id="rowbadge" title="The view splits into rows when zoomed out"></span>
+    <span id="readout" class="mono"></span>
   </div>
-  <div class="hint">scroll / pinch to zoom · drag to pan · click a band</div>
-  <div id="readout" class="mono"></div>
-  <div id="tooltip"></div>
+  <div class="canvaswrap">
+    <canvas id="strip" tabindex="0" aria-label="Zoomable spectrum allocation chart. Use arrow keys to pan, plus and minus to zoom, 0 to reset."></canvas>
+    <div id="pinrow"></div>
+    <div id="tooltip"></div>
+  </div>
 </div>
 <canvas id="mini" aria-label="Spectrum overview minimap"></canvas>
 
@@ -279,8 +304,8 @@ footer p{max-width:88ch;margin:0 0 6px}
   <summary>How to read this chart</summary>
   <div class="cols">
     <div>
-      <h3>The scale is logarithmic</h3>
-      <p>Each tenfold jump in frequency gets equal width, just like the NTIA wall chart. The entire AM dial occupies as much of this map as everything from 30 to 300 GHz — zoom in and the detail keeps coming.</p>
+      <h3>The scale is logarithmic — and it wraps</h3>
+      <p>Each tenfold jump in frequency gets equal width, just like the NTIA wall chart. Zoomed out, the spectrum wraps onto up to three stacked rows — reading left to right, top to bottom — so every decade gets three times the width instead of being crushed into one strip. Zoom in and the rows merge back into one.</p>
       <h3>CAPITALS outrank lowercase</h3>
       <p>ITU convention: services in CAPITALS are <b>primary</b> — they get protection from interference. Lowercase services are <b>secondary</b>: welcome, but they must accept interference and cause none.</p>
     </div>

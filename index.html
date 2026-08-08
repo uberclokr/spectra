@@ -47,9 +47,18 @@ body{
 /* ── header ── */
 header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;
   padding:26px 0 14px;border-bottom:2px solid var(--ink)}
+.brand .markwrap{position:relative;display:inline-block;width:max-content;padding-top:23px}
+/* explicit width: an <svg> is a replaced element, so left/right:0 alone would
+   size it from its own aspect ratio instead of filling the wordmark */
+.brand .noise{position:absolute;left:0;top:12px;width:100%;height:11px;color:var(--muted);
+  opacity:.7;pointer-events:none}
 .brand h1{font-family:"Bahnschrift","Avenir Next Condensed","Arial Narrow",system-ui,sans-serif;
   font-size:34px;font-weight:700;letter-spacing:.24em;margin:0;line-height:1}
-.brand h1 .tune{color:var(--accent)}
+.brand h1 .tune{position:relative;color:var(--accent)}
+/* carrier spike, anchored to the T so it can never drift off the letter */
+.brand h1 .tune::before{content:"";position:absolute;left:50%;bottom:calc(100% + 3px);
+  transform:translateX(-50%);width:0;height:0;border-left:4px solid transparent;
+  border-right:4px solid transparent;border-bottom:17px solid var(--accent)}
 .brand .tag{font-size:11px;letter-spacing:.22em;color:var(--muted);text-transform:uppercase;margin-top:6px}
 .authbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .authbar label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
@@ -85,20 +94,24 @@ select#auth:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 /* ── scope ── */
 .scope{position:relative;border:1px solid var(--line);border-radius:10px;background:var(--surface);
   box-shadow:var(--shadow);overflow:hidden}
-#pinrow{position:relative;height:34px;border-bottom:1px solid var(--line2)}
-.pin{position:absolute;top:5px;transform:translateX(-50%);font:11.5px system-ui;
-  padding:3px 8px;border-radius:99px;border:1px solid var(--line);background:var(--panel);
-  color:var(--ink);cursor:pointer;white-space:nowrap;line-height:1.2}
-.pin::after{content:"";position:absolute;left:50%;top:100%;width:1px;height:6px;background:var(--muted)}
+.scopebar{display:flex;align-items:center;gap:12px;padding:7px 10px;
+  border-bottom:1px solid var(--line2);background:var(--panel)}
+.scopebar .hint{font-size:11.5px;color:var(--muted)}
+#rowbadge{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+  border:1px solid var(--line);border-radius:99px;padding:2px 9px;white-space:nowrap}
+#readout{margin-left:auto;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;
+  font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
+#readout b{color:var(--accent-ink);font-weight:600}
+.canvaswrap{position:relative}
+#pinrow{position:absolute;inset:0;pointer-events:none;z-index:15}
+.pin{position:absolute;transform:translateX(-50%);font:11.5px system-ui;pointer-events:auto;
+  padding:2px 8px;border-radius:99px;border:1px solid var(--line);background:var(--panel);
+  color:var(--ink);cursor:pointer;white-space:nowrap;line-height:1.25}
+.pin::after{content:"";position:absolute;left:50%;top:100%;width:1px;height:5px;background:var(--muted)}
 .pin:hover{border-color:var(--accent);color:var(--accent-ink)}
 .pin:focus-visible{outline:2px solid var(--accent)}
 #strip{display:block;width:100%;touch-action:none;cursor:crosshair}
 #strip:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
-#readout{position:absolute;right:10px;top:44px;z-index:20;pointer-events:none;display:none;
-  background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);
-  border-radius:6px;padding:6px 10px;font-family:ui-monospace,Menlo,Consolas,monospace;
-  font-size:12.5px;font-variant-numeric:tabular-nums;box-shadow:var(--shadow)}
-#readout b{color:var(--accent-ink);font-weight:600}
 #tooltip{position:absolute;z-index:30;pointer-events:none;display:none;max-width:300px;
   background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);
   padding:9px 12px;font-size:12.5px;line-height:1.45}
@@ -107,13 +120,11 @@ select#auth:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 #tooltip .tt-s{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px}
 #tooltip .sw{width:9px;height:9px;border-radius:2px;flex:0 0 auto}
 #tooltip .tt-more{margin-top:5px;color:var(--muted);font-size:11px;font-style:italic}
-.zoomctl{position:absolute;left:10px;top:44px;z-index:20;display:flex;flex-direction:column;gap:5px}
-.zoomctl button{width:30px;height:30px;border-radius:6px;border:1px solid var(--line);
-  background:var(--panel);color:var(--ink);font:600 15px system-ui;cursor:pointer;line-height:1}
+.zoomctl{display:flex;gap:4px}
+.zoomctl button{width:26px;height:24px;border-radius:5px;border:1px solid var(--line);
+  background:var(--bg);color:var(--ink);font:600 14px system-ui;cursor:pointer;line-height:1}
 .zoomctl button:hover{border-color:var(--accent);color:var(--accent-ink)}
 .zoomctl button:focus-visible{outline:2px solid var(--accent)}
-.hint{position:absolute;left:50px;top:48px;z-index:10;font-size:11.5px;color:var(--muted);pointer-events:none;
-  background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:3px 9px;opacity:.92}
 
 #mini{display:block;width:100%;height:44px;margin-top:8px;border:1px solid var(--line);
   border-radius:8px;background:var(--surface);cursor:pointer;touch-action:none}
@@ -227,8 +238,17 @@ footer p{max-width:88ch;margin:0 0 6px}
 <div class="wrap">
 <header class="top">
   <div class="brand">
-    <h1>SPEC<span class="tune">T</span>RA</h1>
-    <div class="tag">Radio Frequency Allocation Explorer · 3 kHz – 300 GHz</div>
+    <div class="markwrap">
+      <svg class="noise" viewBox="0 0 400 12" preserveAspectRatio="none" aria-hidden="true">
+        <polyline points="0,10 10,11 19,9 28,11 36,10 46,11 55,8 63,11 72,10 82,11 91,9
+          100,11 110,10 119,11 128,9 138,11 147,10 156,11 166,8 175,11 184,10 194,11 203,9
+          212,11 222,10 231,11 240,9 250,11 259,10 268,11 278,9 287,11 296,10 306,11 315,8
+          324,11 334,10 343,11 352,9 362,11 371,10 381,11 390,9 400,11"
+          fill="none" stroke="currentColor" stroke-width="1.1" vector-effect="non-scaling-stroke"/>
+      </svg>
+      <h1>SPEC<span class="tune">T</span>RA</h1>
+    </div>
+    <div class="tag">World Frequency Allocations · 3 kHz – 300 GHz</div>
   </div>
   <div class="authbar">
     <label for="auth">Regulator</label>
@@ -248,16 +268,21 @@ footer p{max-width:88ch;margin:0 0 6px}
 </div>
 
 <div class="scope">
-  <div id="pinrow"></div>
-  <canvas id="strip" tabindex="0" aria-label="Zoomable spectrum allocation chart. Use arrow keys to pan, plus and minus to zoom, 0 to reset."></canvas>
-  <div class="zoomctl">
-    <button id="zin"  title="Zoom in (+)" aria-label="Zoom in">+</button>
-    <button id="zout" title="Zoom out (−)" aria-label="Zoom out">−</button>
-    <button id="zfit" title="Reset view (0)" aria-label="Reset view">⤢</button>
+  <div class="scopebar">
+    <div class="zoomctl">
+      <button id="zout" title="Zoom out (−)" aria-label="Zoom out">−</button>
+      <button id="zin"  title="Zoom in (+)" aria-label="Zoom in">+</button>
+      <button id="zfit" title="Reset view (0)" aria-label="Reset view">⤢</button>
+    </div>
+    <span class="hint">scroll to zoom · drag to pan · click a band</span>
+    <span id="rowbadge" title="The view splits into rows when zoomed out"></span>
+    <span id="readout" class="mono"></span>
   </div>
-  <div class="hint">scroll / pinch to zoom · drag to pan · click a band</div>
-  <div id="readout" class="mono"></div>
-  <div id="tooltip"></div>
+  <div class="canvaswrap">
+    <canvas id="strip" tabindex="0" aria-label="Zoomable spectrum allocation chart. Use arrow keys to pan, plus and minus to zoom, 0 to reset."></canvas>
+    <div id="pinrow"></div>
+    <div id="tooltip"></div>
+  </div>
 </div>
 <canvas id="mini" aria-label="Spectrum overview minimap"></canvas>
 
@@ -279,8 +304,8 @@ footer p{max-width:88ch;margin:0 0 6px}
   <summary>How to read this chart</summary>
   <div class="cols">
     <div>
-      <h3>The scale is logarithmic</h3>
-      <p>Each tenfold jump in frequency gets equal width, just like the NTIA wall chart. The entire AM dial occupies as much of this map as everything from 30 to 300 GHz — zoom in and the detail keeps coming.</p>
+      <h3>The scale is logarithmic — and it wraps</h3>
+      <p>Each tenfold jump in frequency gets equal width, just like the NTIA wall chart. Zoomed out, the spectrum wraps onto up to three stacked rows — reading left to right, top to bottom — so every decade gets three times the width instead of being crushed into one strip. Zoom in and the rows merge back into one.</p>
       <h3>CAPITALS outrank lowercase</h3>
       <p>ITU convention: services in CAPITALS are <b>primary</b> — they get protection from interference. Lowercase services are <b>secondary</b>: welcome, but they must accept interference and cause none.</p>
     </div>
@@ -1791,30 +1816,70 @@ function build(key){
   renderMini(); requestRender(); saveHashSoon();
 }
 
-/* ── geometry ── */
-let W = 0, H = 0, DPR = 1;
-const ROW_ITU = 24, ROW_IEEE = 18, ROW_AXIS = 30, ROW_WAVE = 18, NICK_H = 20;
-function stripTop(){ return ROW_ITU + ROW_IEEE; }
-function stripH(){ return H - stripTop() - ROW_AXIS - ROW_WAVE; }
-function X(logf){ return (logf - state.view.a) / (state.view.b - state.view.a) * W; }
-function Xf(f){ return X(Math.log10(f)); }
-function fAt(x){ return Math.pow(10, state.view.a + x / W * (state.view.b - state.view.a)); }
+/* ── geometry ──
+   Wide views split into up to 3 stacked rows (NTIA-chart style): each row is a
+   contiguous slice of the log-frequency span, so zooming out buys horizontal
+   resolution instead of squeezing everything into one strip. */
+let W = 0, H = 0, DPR = 1, lastN = 0;
+const PIN_H = 25, AX_H = 25, WAVE_H = 17, NICK_H = 20, ROW_GAP = 9;
 
-function resize(){
+function rowCount(){
+  const span = state.view.b - state.view.a;
+  return span >= 5 ? 3 : span >= 2.2 ? 2 : 1;
+}
+/* per-row geometry: log range + the y bands it owns */
+function rowLayout(){
+  const n = lastN || rowCount();
+  const multi = n > 1;
+  const railI = multi ? 17 : 24, railE = multi ? 13 : 18, waveH = multi ? 0 : WAVE_H;
+  const per = (H - (n - 1) * ROW_GAP) / n;
+  const bandH = per - PIN_H - railI - railE - AX_H - waveH;
+  const slice = (state.view.b - state.view.a) / n;
+  const rows = [];
+  for (let r = 0; r < n; r++){
+    const top = r * (per + ROW_GAP);
+    const bandTop = top + PIN_H + railI + railE;
+    rows.push({ r, n, per,
+      a: state.view.a + r * slice, b: state.view.a + (r + 1) * slice,
+      top, pinY: top, railIY: top + PIN_H, railEY: top + PIN_H + railI,
+      railI, railE, waveH, bandTop, bandH, axY: bandTop + bandH });
+  }
+  return rows;
+}
+function rowAtY(y, rows){
+  rows = rows || rowLayout();
+  let best = rows[0], bd = Infinity;
+  for (const rw of rows){
+    if (y >= rw.top && y <= rw.top + rw.per) return rw;
+    const d = y < rw.top ? rw.top - y : y - (rw.top + rw.per);
+    if (d < bd){ bd = d; best = rw; }
+  }
+  return best;
+}
+const XR = (lg, rw) => (lg - rw.a) / (rw.b - rw.a) * W;
+const XFR = (f, rw) => XR(Math.log10(f), rw);
+const fAtRow = (x, rw) => Math.pow(10, rw.a + x / W * (rw.b - rw.a));
+
+function applySize(){
   DPR = window.devicePixelRatio || 1;
   W = strip.clientWidth;
-  H = Math.max(300, Math.min(520, Math.round(window.innerHeight * .48)));
+  const n = rowCount();
+  lastN = n;
+  H = n === 1
+    ? Math.max(300, Math.min(520, Math.round(window.innerHeight * .48)))
+    : Math.max(150 * n + 60, Math.min(190 * n, Math.round(window.innerHeight * .74)));
   strip.style.height = H + "px";
   strip.width = Math.round(W * DPR); strip.height = Math.round(H * DPR);
   sctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   mini.width = Math.round(mini.clientWidth * DPR); mini.height = Math.round(44 * DPR);
   mctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  renderMini(); requestRender();
+  $("rowbadge").textContent = n === 1 ? "single row" : n + " rows";
 }
+function resize(){ applySize(); renderMini(); requestRender(); }
 
 /* ── ticks ── */
-function niceTicks(){
-  const { a, b } = state.view, span = b - a, out = [];
+function niceTicks(a, b){
+  const span = b - a, out = [];
   if (span > .8){
     const mants = span > 4 ? [1] : span > 1.6 ? [1,2,5] : [1,1.5,2,3,4,5,6,7,8,9];
     for (let d = Math.floor(a) - 1; d <= Math.ceil(b); d++)
@@ -1841,34 +1906,42 @@ function requestRender(){
   requestAnimationFrame(() => { rafPending = false; render(); });
 }
 function render(){
-  const { a, b } = state.view;
+  if (rowCount() !== lastN) applySize();
   sctx.clearRect(0, 0, W, H);
-  const sT = stripTop(), sH = stripH();
+  const rows = rowLayout();
+  for (const rw of rows) renderRow(rw);
+  layoutPins(rows);
+}
+
+function renderRow(rw){
+  const { a, b } = rw;
+  const sT = rw.bandTop, sH = rw.bandH;
+  const Xf = f => XFR(f, rw);
 
   /* ITU + IEEE rails */
-  sctx.font = "700 11px 'Bahnschrift','Avenir Next Condensed','Arial Narrow',system-ui";
+  sctx.font = "700 " + (rw.n > 1 ? 10 : 11) + "px 'Bahnschrift','Avenir Next Condensed','Arial Narrow',system-ui";
   for (const [lo, hi, code, longName] of ITU_BANDS){
     const x0 = Math.max(0, Xf(lo)), x1 = Math.min(W, Xf(hi));
     if (x1 <= 0 || x0 >= W) continue;
     sctx.strokeStyle = COLORS.line;
-    sctx.strokeRect(x0 + .5, .5, x1 - x0, ROW_ITU - 1);
+    sctx.strokeRect(x0 + .5, rw.railIY + .5, x1 - x0, rw.railI - 1);
     sctx.fillStyle = COLORS.muted;
     const w = x1 - x0;
     if (w > 30){
       const label = w > 220 ? code + " · " + longName + " Frequency" : code;
       sctx.textAlign = "center"; sctx.textBaseline = "middle";
-      sctx.fillText(label, (x0 + x1) / 2, ROW_ITU / 2 + 1);
+      sctx.fillText(label, (x0 + x1) / 2, rw.railIY + rw.railI / 2 + 1);
     }
   }
-  sctx.font = "600 10px ui-monospace,Menlo,Consolas,monospace";
+  sctx.font = "600 " + (rw.n > 1 ? 9 : 10) + "px ui-monospace,Menlo,Consolas,monospace";
   for (const [lo, hi, code] of IEEE_BANDS){
     const x0 = Math.max(0, Xf(lo)), x1 = Math.min(W, Xf(hi));
     if (x1 <= 0 || x0 >= W || x1 - x0 < 14) continue;
     sctx.strokeStyle = COLORS.line;
-    sctx.strokeRect(x0 + .5, ROW_ITU + .5, x1 - x0, ROW_IEEE - 1);
+    sctx.strokeRect(x0 + .5, rw.railEY + .5, x1 - x0, rw.railE - 1);
     sctx.fillStyle = COLORS.muted;
     sctx.textAlign = "center"; sctx.textBaseline = "middle";
-    sctx.fillText(code, (x0 + x1) / 2, ROW_ITU + ROW_IEEE / 2 + 1);
+    sctx.fillText(code, (x0 + x1) / 2, rw.railEY + rw.railE / 2 + 1);
   }
 
   /* bands */
@@ -1942,21 +2015,21 @@ function render(){
     }
   }
 
-  /* selection + hover outline */
+  /* selection + hover outline (only in the row that owns the band) */
   for (const [bnd, wdt] of [[state.sel, 2.5], [state.hover && state.hover.band, 1.5]]){
-    if (!bnd) continue;
-    const x0 = Xf(bnd.lo), x1 = Math.max(Xf(bnd.hi), x0 + 1);
+    if (!bnd || bnd.hi < fLo || bnd.lo > fHi) continue;
+    const x0 = Math.max(Xf(bnd.lo), -2), x1 = Math.min(Math.max(Xf(bnd.hi), x0 + 1), W + 2);
     sctx.strokeStyle = COLORS.accent; sctx.lineWidth = wdt;
     sctx.strokeRect(x0 + wdt/2, sT + wdt/2, x1 - x0 - wdt, sH - wdt);
   }
 
   /* axis */
-  const axY = sT + sH;
+  const axY = rw.axY;
   sctx.strokeStyle = COLORS.ink; sctx.lineWidth = 1;
   sctx.beginPath(); sctx.moveTo(0, axY + .5); sctx.lineTo(W, axY + .5); sctx.stroke();
   sctx.font = "10.5px ui-monospace,Menlo,Consolas,monospace";
   let lastEnd = -1e9;
-  for (const t of niceTicks()){
+  for (const t of niceTicks(a, b)){
     const x = Xf(t.f);
     if (x < -2 || x > W + 2) continue;
     sctx.strokeStyle = COLORS.muted;
@@ -1964,62 +2037,70 @@ function render(){
     if (t.major){
       const label = fmtFreq(t.f);
       const wpx = sctx.measureText(label).width;
-      if (x - wpx / 2 > lastEnd + 8){
+      /* nudge edge labels inside the canvas so they never clip */
+      const lx = Math.min(Math.max(x, wpx / 2 + 3), W - wpx / 2 - 3);
+      if (lx - wpx / 2 > lastEnd + 8){
         sctx.fillStyle = COLORS.ink;
         sctx.textAlign = "center"; sctx.textBaseline = "top";
-        sctx.fillText(label, x, axY + 9);
-        lastEnd = x + wpx / 2;
+        sctx.fillText(label, lx, axY + 9);
+        lastEnd = lx + wpx / 2;
       }
     }
   }
-  /* wavelength ruler */
-  sctx.font = "10px ui-monospace,Menlo,Consolas,monospace";
-  sctx.fillStyle = COLORS.muted;
-  sctx.textAlign = "center"; sctx.textBaseline = "top";
-  const wlY = axY + ROW_AXIS;
-  let lastW = -1e9;
-  for (let e = 6; e >= -4; e--){
-    const lam = Math.pow(10, e), f = C_LIGHT / lam;
-    const x = Xf(f);
-    if (x < 16 || x > W - 16) continue;
-    const lbl = "λ " + (e >= 3 ? Math.pow(10, e-3) + " km" : e >= 0 ? lam + " m" : e >= -2 ? Math.pow(10, e+2) + " cm" : Math.pow(10, e+3) + " mm");
-    const wpx = sctx.measureText(lbl).width;
-    if (x - wpx/2 > lastW + 10){
-      sctx.strokeStyle = COLORS.line;
-      sctx.beginPath(); sctx.moveTo(x + .5, wlY); sctx.lineTo(x + .5, wlY + 4); sctx.stroke();
-      sctx.fillText(lbl, x, wlY + 4);
-      lastW = x + wpx/2;
+  /* wavelength ruler (single-row views only; λ also lives in the tooltip and card) */
+  if (rw.waveH){
+    sctx.font = "10px ui-monospace,Menlo,Consolas,monospace";
+    sctx.fillStyle = COLORS.muted;
+    sctx.textAlign = "center"; sctx.textBaseline = "top";
+    const wlY = axY + AX_H;
+    let lastW = -1e9;
+    for (let e = 6; e >= -4; e--){
+      const lam = Math.pow(10, e), f = C_LIGHT / lam;
+      const x = Xf(f);
+      if (x < 16 || x > W - 16) continue;
+      const lbl = "λ " + (e >= 3 ? Math.pow(10, e-3) + " km" : e >= 0 ? lam + " m" : e >= -2 ? Math.pow(10, e+2) + " cm" : Math.pow(10, e+3) + " mm");
+      const wpx = sctx.measureText(lbl).width;
+      if (x - wpx/2 > lastW + 10){
+        sctx.strokeStyle = COLORS.line;
+        sctx.beginPath(); sctx.moveTo(x + .5, wlY); sctx.lineTo(x + .5, wlY + 4); sctx.stroke();
+        sctx.fillText(lbl, x, wlY + 4);
+        lastW = x + wpx/2;
+      }
     }
   }
 
-  /* crosshair */
-  if (state.hover){
+  /* crosshair — only in the hovered row */
+  if (state.hover && state.hover.row === rw.r){
     const x = state.hover.x;
     sctx.strokeStyle = COLORS.accent; sctx.lineWidth = 1;
     sctx.setLineDash([3, 3]);
     sctx.beginPath(); sctx.moveTo(x + .5, sT); sctx.lineTo(x + .5, sT + sH); sctx.stroke();
     sctx.setLineDash([]);
   }
-  layoutPins();
 }
 
 /* ── landmark pins ── */
-function layoutPins(){
+function layoutPins(rows){
   pinrow.textContent = "";
-  const placed = [];
+  const placed = rows.map(() => []);
+  let total = 0;
   for (const lm of state.landmarks){
-    const cx = X((Math.log10(lm.lo) + Math.log10(lm.hi)) / 2);
+    const lg = (Math.log10(lm.lo) + Math.log10(lm.hi)) / 2;
+    const rw = rows.find(r => lg >= r.a && lg <= r.b);
+    if (!rw) continue;
+    const cx = XR(lg, rw);
     if (cx < 8 || cx > W - 8) continue;
     const wpx = lm.label.length * 6.4 + 20;
-    if (placed.some(([p0, p1]) => cx - wpx/2 < p1 && cx + wpx/2 > p0)) continue;
-    placed.push([cx - wpx/2, cx + wpx/2]);
+    if (placed[rw.r].some(([p0, p1]) => cx - wpx/2 < p1 && cx + wpx/2 > p0)) continue;
+    placed[rw.r].push([cx - wpx/2, cx + wpx/2]);
     const el = document.createElement("button");
     el.className = "pin"; el.textContent = lm.label;
     el.style.left = cx + "px";
+    el.style.top = (rw.pinY + 3) + "px";
     el.title = fmtFreq(lm.lo) + (lm.hi > lm.lo ? " – " + fmtFreq(lm.hi) : "");
     el.addEventListener("click", () => flyTo(lm.lo, lm.hi));
     pinrow.appendChild(el);
-    if (placed.length > 40) break;
+    if (++total > 60) break;
   }
 }
 
@@ -2060,12 +2141,15 @@ function setView(a, b){
   state.view = clampView(a, b);
   renderMini(); requestRender(); saveHashSoon();
 }
-function zoomAt(x, factor){
+function zoomAt(x, factor, rw){
   const { a, b } = state.view;
-  const pivot = a + x / W * (b - a);
-  const na = pivot + (a - pivot) * factor;
-  const nb = pivot + (b - pivot) * factor;
-  setView(na, nb);
+  const rows = rowLayout();
+  rw = rw || rows[Math.floor(rows.length / 2)];
+  const pivot = rw.a + x / W * (rw.b - rw.a);   // frequency under the cursor
+  const span = b - a, nspan = Math.max(MIN_SPAN, Math.min(span * factor, LOGMAX - LOGMIN));
+  const frac = (pivot - a) / span;              // hold it at the same place in the view
+  const na = pivot - frac * nspan;
+  setView(na, na + nspan);
 }
 function flyTo(lo, hi){
   let la = Math.log10(lo), lb = Math.log10(Math.max(hi, lo));
@@ -2098,7 +2182,7 @@ strip.addEventListener("pointerdown", e => {
   strip.setPointerCapture(e.pointerId);
   pointers.set(e.pointerId, { x: e.offsetX, y: e.offsetY });
   moved = false;
-  if (pointers.size === 1) dragStart = { x: e.offsetX, view: { ...state.view } };
+  if (pointers.size === 1) dragStart = { x: e.offsetX, view: { ...state.view }, n: lastN };
   else if (pointers.size === 2){
     const [p1, p2] = [...pointers.values()];
     pinch0 = { d: Math.abs(p1.x - p2.x) || 1, cx: (p1.x + p2.x) / 2, view: { ...state.view } };
@@ -2122,8 +2206,9 @@ strip.addEventListener("pointermove", e => {
   if (dragStart && pointers.size === 1){
     const dx = e.offsetX - dragStart.x;
     if (Math.abs(dx) > 3) moved = true;
-    const span = dragStart.view.b - dragStart.view.a;
-    const shift = -dx / W * span;
+    /* pan by the row's own slice so content tracks the cursor 1:1 */
+    const slice = (dragStart.view.b - dragStart.view.a) / dragStart.n;
+    const shift = -dx / W * slice;
     setView(dragStart.view.a + shift, dragStart.view.b + shift);
   }
   updateHover(e.offsetX, e.offsetY);
@@ -2133,7 +2218,8 @@ function endPointer(e){
   if (pointers.size < 2) pinch0 = null;
   if (pointers.size === 0){
     if (!moved && e.type === "pointerup"){
-      const b = findBand(state.bands, fAt(e.offsetX));
+      const rw = rowAtY(e.offsetY);
+      const b = findBand(state.bands, fAtRow(e.offsetX, rw));
       selectBand(b === state.sel ? null : b);
     }
     dragStart = null;
@@ -2142,25 +2228,25 @@ function endPointer(e){
 strip.addEventListener("pointerup", endPointer);
 strip.addEventListener("pointercancel", endPointer);
 strip.addEventListener("pointerleave", () => {
-  if (pointers.size === 0){ state.hover = null; tooltip.style.display = "none"; readout.style.display = "none"; requestRender(); }
+  if (pointers.size === 0){ state.hover = null; tooltip.style.display = "none"; readout.innerHTML = ""; requestRender(); }
 });
 strip.addEventListener("wheel", e => {
   e.preventDefault();
-  zoomAt(e.offsetX, Math.exp(e.deltaY * .0016));
+  zoomAt(e.offsetX, Math.exp(e.deltaY * .0016), rowAtY(e.offsetY));
   updateHover(e.offsetX, e.offsetY);
 }, { passive: false });
 strip.addEventListener("dblclick", e => {
-  const f = fAt(e.offsetX);
-  const b = findBand(state.bands, f);
+  const rw = rowAtY(e.offsetY);
+  const b = findBand(state.bands, fAtRow(e.offsetX, rw));
   if (b && e.shiftKey === false) flyTo(b.lo, b.hi);
-  else zoomAt(e.offsetX, e.shiftKey ? 3 : 1/3);
+  else zoomAt(e.offsetX, e.shiftKey ? 3 : 1/3, rw);
 });
 
 function updateHover(x, y){
-  const f = fAt(x);
+  const rw = rowAtY(y);
+  const f = fAtRow(x, rw);
   const band = findBand(state.bands, f);
-  state.hover = { x, f, band };
-  readout.style.display = "block";
+  state.hover = { x, y, f, band, row: rw.r };
   readout.innerHTML = "<b>" + fmtFreq(f) + "</b> · λ " + fmtWave(f);
   if (band){
     tooltip.style.display = "block";
@@ -2172,19 +2258,20 @@ function updateHover(x, y){
     if (band.diff) html += "<div class='tt-more'>≠ FCC table — click to compare</div>";
     else if (band.note) html += "<div class='tt-more'>click for the story</div>";
     tooltip.innerHTML = html;
-    const tw = tooltip.offsetWidth, sw = strip.clientWidth;
+    const tw = tooltip.offsetWidth, th = tooltip.offsetHeight, sw = strip.clientWidth;
     let tx = x + 16; if (tx + tw > sw - 8) tx = x - tw - 16;
+    let ty = y + 18; if (ty + th > H - 4) ty = Math.max(2, y - th - 12);
     tooltip.style.left = Math.max(4, tx) + "px";
-    tooltip.style.top = Math.min(y + 46, H - tooltip.offsetHeight + 20) + "px";
+    tooltip.style.top = ty + "px";
   } else tooltip.style.display = "none";
   requestRender();
 }
 
 /* keyboard */
 strip.addEventListener("keydown", e => {
-  const span = state.view.b - state.view.a;
-  if (e.key === "ArrowLeft"){ setView(state.view.a - span*.12, state.view.b - span*.12); }
-  else if (e.key === "ArrowRight"){ setView(state.view.a + span*.12, state.view.b + span*.12); }
+  const step = (state.view.b - state.view.a) / lastN * .12;
+  if (e.key === "ArrowLeft"){ setView(state.view.a - step, state.view.b - step); }
+  else if (e.key === "ArrowRight"){ setView(state.view.a + step, state.view.b + step); }
   else if (e.key === "+" || e.key === "="){ zoomAt(W/2, .7); }
   else if (e.key === "-" || e.key === "_"){ zoomAt(W/2, 1.4); }
   else if (e.key === "0" || e.key === "Home"){ setView(LOGMIN, LOGMAX); }
