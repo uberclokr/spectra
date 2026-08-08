@@ -196,7 +196,7 @@ function applySize(){
   mctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   $("rowbadge").textContent = n === 1 ? "single row" : n + " rows";
 }
-function resize(){ applySize(); renderMini(); requestRender(); keyWordmark(); }
+function resize(){ applySize(); renderMini(); requestRender(); }
 
 /* ── ticks ── */
 function niceTicks(a, b){
@@ -794,33 +794,6 @@ function onTheme(){
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", onTheme);
 new MutationObserver(onTheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
-/* ── wordmark: keyed slices ──
-   A dense run of 1–3 px cuts at irregular 4–8 px spacing — a carrier gated at
-   high rate. Slices this fine can't amputate a glyph, so they're distributed
-   across the whole wordmark rather than placed per letter. Seeded, so the
-   pattern is identical on every re-render instead of shimmering on resize. */
-const KEY_SLICE = { w: [1, 3], gap: [4, 8], seed: 20260808 };
-function keyWordmark(){
-  const el = $("wordmark");
-  if (!el || !CSS.supports("mask-image", "linear-gradient(#000,#000)")) return;
-  const width = el.getBoundingClientRect().width;
-  if (!width) return;
-  const rnd = lcg(KEY_SLICE.seed);
-  const [w0, w1] = KEY_SLICE.w, [g0, g1] = KEY_SLICE.gap;
-  /* whole-pixel stops so the cuts stay crisp on 1× displays */
-  let g = "linear-gradient(90deg", at = 0, x = 2 + Math.round(rnd() * 3), n = 0;
-  while (x < width - 3 && n < 90){
-    const x1 = x + w0 + Math.round(rnd() * (w1 - w0));
-    g += ", #000 " + at + "px " + x + "px";
-    g += ", transparent " + x + "px " + x1 + "px";
-    at = x1; n++;
-    x = x1 + g0 + Math.round(rnd() * (g1 - g0));
-  }
-  g += ", #000 " + at + "px 100%)";
-  el.style.webkitMaskImage = g;
-  el.style.maskImage = g;
-}
-
 /* ── boot ── */
 readColors(); makePatterns();
 const hp = new URLSearchParams(location.hash.slice(1));
@@ -838,7 +811,5 @@ resize();
   }
 }
 booting = false;
-keyWordmark();
-if (document.fonts && document.fonts.ready) document.fonts.ready.then(keyWordmark);
 window.addEventListener("resize", resize);
 new ResizeObserver(() => { if (strip.clientWidth !== W) resize(); }).observe(strip);

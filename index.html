@@ -7,6 +7,7 @@
   --f-bc:#c56c21; --f-mob:#3967c1; --f-fx:#8a5619; --f-mar:#008a77; --f-aero:#1996c3;
   --f-nav:#559647; --f-sat:#7358b3; --f-ham:#b79420; --f-sci:#b55499; --f-none:#b3b2a7;
   --hatch:rgba(42,44,48,.22); --shadow:0 1px 3px rgba(40,36,20,.08),0 8px 24px rgba(40,36,20,.07);
+  --sea:#12518F;
 }
 @media (prefers-color-scheme: dark){:root{
   --bg:#0C0F14; --surface:#12161D; --panel:#171C24; --ink:#E8E6E1; --muted:#98A0AB;
@@ -15,6 +16,7 @@
   --f-bc:#c77434; --f-mob:#4571c6; --f-fx:#985b0b; --f-mar:#00907d; --f-aero:#3398c2;
   --f-nav:#5d9850; --f-sat:#7860b5; --f-ham:#af8e2a; --f-sci:#b55b9a; --f-none:#4a5058;
   --hatch:rgba(232,230,225,.20); --shadow:0 1px 3px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  --sea:#4C9BE0;
 }}
 :root[data-theme="dark"]{
   --bg:#0C0F14; --surface:#12161D; --panel:#171C24; --ink:#E8E6E1; --muted:#98A0AB;
@@ -23,6 +25,7 @@
   --f-bc:#c77434; --f-mob:#4571c6; --f-fx:#985b0b; --f-mar:#00907d; --f-aero:#3398c2;
   --f-nav:#5d9850; --f-sat:#7860b5; --f-ham:#af8e2a; --f-sci:#b55b9a; --f-none:#4a5058;
   --hatch:rgba(232,230,225,.20); --shadow:0 1px 3px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  --sea:#4C9BE0;
 }
 :root[data-theme="light"]{
   --bg:#F7F6F1; --surface:#F4F3EE; --panel:#FCFBF7; --ink:#2A2C30; --muted:#6C6F76;
@@ -31,7 +34,11 @@
   --f-bc:#c56c21; --f-mob:#3967c1; --f-fx:#8a5619; --f-mar:#008a77; --f-aero:#1996c3;
   --f-nav:#559647; --f-sat:#7358b3; --f-ham:#b79420; --f-sci:#b55499; --f-none:#b3b2a7;
   --hatch:rgba(42,44,48,.22); --shadow:0 1px 3px rgba(40,36,20,.08),0 8px 24px rgba(40,36,20,.07);
+  --sea:#12518F;
 }
+/* The waterline: two cycles of a sine carrier, everything below it filled.
+   preserveAspectRatio="none" lets it stretch to whatever the wordmark measures. */
+:root{--wave:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40" preserveAspectRatio="none"><path d="M0,13 Q12.5,6 25,13 T50,13 T75,13 T100,13 L100,40 L0,40 Z" fill="black"/></svg>')}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{
@@ -47,12 +54,16 @@ body{
 /* ── header ── */
 header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;
   padding:26px 0 14px;border-bottom:2px solid var(--ink)}
-/* Wordmark: keyed slices cut through the letters, widths varying like a
-   gated carrier. Cut positions are computed from measured glyph boxes in
-   keyWordmark() so they slice letter bodies, never amputate a terminal —
-   and stay correct across font fallbacks. */
-.brand h1{font-family:"Bahnschrift","Avenir Next Condensed","Arial Narrow",system-ui,sans-serif;
-  font-size:34px;font-weight:700;letter-spacing:.24em;margin:0;line-height:1;width:max-content;
+/* Wordmark: heavy block letters, set tight. A carrier wave runs through them —
+   everything below the waterline is sea blue. Two stacked copies of the word:
+   the ink layer beneath, the sea layer above it masked to the wave. The mask
+   carries only the shape, so both colors stay live CSS variables per theme. */
+.brand h1{position:relative;display:block;width:max-content;margin:0;
+  font-family:"Arial Black","Segoe UI Black","Helvetica Neue",Helvetica,Arial,sans-serif;
+  font-size:38px;font-weight:900;letter-spacing:.015em;line-height:1}
+.brand h1 .ink{display:block;color:var(--ink)}
+.brand h1 .sea{position:absolute;left:0;top:0;color:var(--sea);
+  -webkit-mask-image:var(--wave);mask-image:var(--wave);
   -webkit-mask-size:100% 100%;mask-size:100% 100%;
   -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat}
 .brand .tag{font-size:11px;letter-spacing:.22em;color:var(--muted);text-transform:uppercase;margin-top:6px}
@@ -234,7 +245,7 @@ footer p{max-width:88ch;margin:0 0 6px}
 <div class="wrap">
 <header class="top">
   <div class="brand">
-    <h1 id="wordmark">SPECTRA</h1>
+    <h1 id="wordmark" aria-label="SPECTRA"><span class="ink" aria-hidden="true">SPECTRA</span><span class="sea" aria-hidden="true">SPECTRA</span></h1>
     <div class="tag">World Frequency Allocations · 3 kHz – 300 GHz</div>
   </div>
   <div class="authbar">
@@ -1862,7 +1873,7 @@ function applySize(){
   mctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   $("rowbadge").textContent = n === 1 ? "single row" : n + " rows";
 }
-function resize(){ applySize(); renderMini(); requestRender(); keyWordmark(); }
+function resize(){ applySize(); renderMini(); requestRender(); }
 
 /* ── ticks ── */
 function niceTicks(a, b){
@@ -2460,33 +2471,6 @@ function onTheme(){
 matchMedia("(prefers-color-scheme: dark)").addEventListener("change", onTheme);
 new MutationObserver(onTheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
 
-/* ── wordmark: keyed slices ──
-   A dense run of 1–3 px cuts at irregular 4–8 px spacing — a carrier gated at
-   high rate. Slices this fine can't amputate a glyph, so they're distributed
-   across the whole wordmark rather than placed per letter. Seeded, so the
-   pattern is identical on every re-render instead of shimmering on resize. */
-const KEY_SLICE = { w: [1, 3], gap: [4, 8], seed: 20260808 };
-function keyWordmark(){
-  const el = $("wordmark");
-  if (!el || !CSS.supports("mask-image", "linear-gradient(#000,#000)")) return;
-  const width = el.getBoundingClientRect().width;
-  if (!width) return;
-  const rnd = lcg(KEY_SLICE.seed);
-  const [w0, w1] = KEY_SLICE.w, [g0, g1] = KEY_SLICE.gap;
-  /* whole-pixel stops so the cuts stay crisp on 1× displays */
-  let g = "linear-gradient(90deg", at = 0, x = 2 + Math.round(rnd() * 3), n = 0;
-  while (x < width - 3 && n < 90){
-    const x1 = x + w0 + Math.round(rnd() * (w1 - w0));
-    g += ", #000 " + at + "px " + x + "px";
-    g += ", transparent " + x + "px " + x1 + "px";
-    at = x1; n++;
-    x = x1 + g0 + Math.round(rnd() * (g1 - g0));
-  }
-  g += ", #000 " + at + "px 100%)";
-  el.style.webkitMaskImage = g;
-  el.style.maskImage = g;
-}
-
 /* ── boot ── */
 readColors(); makePatterns();
 const hp = new URLSearchParams(location.hash.slice(1));
@@ -2504,8 +2488,6 @@ resize();
   }
 }
 booting = false;
-keyWordmark();
-if (document.fonts && document.fonts.ready) document.fonts.ready.then(keyWordmark);
 window.addEventListener("resize", resize);
 new ResizeObserver(() => { if (strip.clientWidth !== W) resize(); }).observe(strip);
 </script>
