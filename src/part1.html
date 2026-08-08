@@ -1,0 +1,269 @@
+<title>SPECTRA — Radio Spectrum Explorer</title>
+<style>
+:root{
+  --bg:#F7F6F1; --surface:#F4F3EE; --panel:#FCFBF7; --ink:#2A2C30; --muted:#6C6F76;
+  --line:#DBD8CE; --line2:#E9E7DE; --accent:#B4720E; --accent-ink:#8F5A08;
+  --sel:#B4720E;
+  --f-bc:#c56c21; --f-mob:#3967c1; --f-fx:#8a5619; --f-mar:#008a77; --f-aero:#1996c3;
+  --f-nav:#559647; --f-sat:#7358b3; --f-ham:#b79420; --f-sci:#b55499; --f-none:#b3b2a7;
+  --hatch:rgba(42,44,48,.22); --shadow:0 1px 3px rgba(40,36,20,.08),0 8px 24px rgba(40,36,20,.07);
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#0C0F14; --surface:#12161D; --panel:#171C24; --ink:#E8E6E1; --muted:#98A0AB;
+  --line:#262C36; --line2:#1D232D; --accent:#E8A13D; --accent-ink:#E8A13D;
+  --sel:#E8A13D;
+  --f-bc:#c77434; --f-mob:#4571c6; --f-fx:#985b0b; --f-mar:#00907d; --f-aero:#3398c2;
+  --f-nav:#5d9850; --f-sat:#7860b5; --f-ham:#af8e2a; --f-sci:#b55b9a; --f-none:#4a5058;
+  --hatch:rgba(232,230,225,.20); --shadow:0 1px 3px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+}}
+:root[data-theme="dark"]{
+  --bg:#0C0F14; --surface:#12161D; --panel:#171C24; --ink:#E8E6E1; --muted:#98A0AB;
+  --line:#262C36; --line2:#1D232D; --accent:#E8A13D; --accent-ink:#E8A13D;
+  --sel:#E8A13D;
+  --f-bc:#c77434; --f-mob:#4571c6; --f-fx:#985b0b; --f-mar:#00907d; --f-aero:#3398c2;
+  --f-nav:#5d9850; --f-sat:#7860b5; --f-ham:#af8e2a; --f-sci:#b55b9a; --f-none:#4a5058;
+  --hatch:rgba(232,230,225,.20); --shadow:0 1px 3px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+}
+:root[data-theme="light"]{
+  --bg:#F7F6F1; --surface:#F4F3EE; --panel:#FCFBF7; --ink:#2A2C30; --muted:#6C6F76;
+  --line:#DBD8CE; --line2:#E9E7DE; --accent:#B4720E; --accent-ink:#8F5A08;
+  --sel:#B4720E;
+  --f-bc:#c56c21; --f-mob:#3967c1; --f-fx:#8a5619; --f-mar:#008a77; --f-aero:#1996c3;
+  --f-nav:#559647; --f-sat:#7358b3; --f-ham:#b79420; --f-sci:#b55499; --f-none:#b3b2a7;
+  --hatch:rgba(42,44,48,.22); --shadow:0 1px 3px rgba(40,36,20,.08),0 8px 24px rgba(40,36,20,.07);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.disp{font-family:"Bahnschrift","Avenir Next Condensed","Helvetica Neue",("Arial Narrow"),"Arial Narrow",system-ui,sans-serif}
+.mono{font-family:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+
+.wrap{max-width:1280px;margin:0 auto;padding:0 20px 48px}
+
+/* ── header ── */
+header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;
+  padding:26px 0 14px;border-bottom:2px solid var(--ink)}
+.brand h1{font-family:"Bahnschrift","Avenir Next Condensed","Arial Narrow",system-ui,sans-serif;
+  font-size:34px;font-weight:700;letter-spacing:.24em;margin:0;line-height:1}
+.brand h1 .tune{color:var(--accent)}
+.brand .tag{font-size:11px;letter-spacing:.22em;color:var(--muted);text-transform:uppercase;margin-top:6px}
+.authbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.authbar label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+select#auth{
+  font:600 15px/1.2 system-ui,sans-serif;color:var(--ink);background:var(--panel);
+  border:1px solid var(--line);border-radius:6px;padding:8px 10px;cursor:pointer}
+select#auth:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.regchip{font-size:11px;letter-spacing:.08em;padding:4px 9px;border:1px solid var(--line);
+  border-radius:99px;color:var(--muted);white-space:nowrap}
+.statline{font-size:12px;color:var(--muted)}
+
+/* ── toolbar ── */
+.toolbar{display:flex;gap:14px;align-items:center;padding:12px 0 10px;flex-wrap:wrap}
+.searchbox{position:relative;flex:0 1 300px;min-width:220px}
+.searchbox input{width:100%;padding:8px 12px;border:1px solid var(--line);border-radius:6px;
+  background:var(--panel);color:var(--ink);font:14px system-ui,sans-serif}
+.searchbox input::placeholder{color:var(--muted)}
+.searchbox input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+#results{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:40;background:var(--panel);
+  border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);overflow:hidden;display:none}
+#results button{display:flex;justify-content:space-between;gap:12px;width:100%;text-align:left;
+  padding:8px 12px;border:0;background:none;color:var(--ink);font:13px system-ui;cursor:pointer}
+#results button:hover,#results button:focus-visible{background:var(--line2);outline:none}
+#results .rf{color:var(--accent-ink);font-size:12px;white-space:nowrap}
+.chips{display:flex;gap:6px;overflow-x:auto;flex:1;padding-bottom:2px;scrollbar-width:thin}
+.chips .lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+  align-self:center;white-space:nowrap;margin-right:2px}
+.chip{flex:0 0 auto;font:12.5px system-ui;padding:5px 11px;border:1px solid var(--line);
+  border-radius:99px;background:var(--panel);color:var(--ink);cursor:pointer;white-space:nowrap}
+.chip:hover{border-color:var(--accent);color:var(--accent-ink)}
+.chip:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+/* ── scope ── */
+.scope{position:relative;border:1px solid var(--line);border-radius:10px;background:var(--surface);
+  box-shadow:var(--shadow);overflow:hidden}
+#pinrow{position:relative;height:34px;border-bottom:1px solid var(--line2)}
+.pin{position:absolute;top:5px;transform:translateX(-50%);font:11.5px system-ui;
+  padding:3px 8px;border-radius:99px;border:1px solid var(--line);background:var(--panel);
+  color:var(--ink);cursor:pointer;white-space:nowrap;line-height:1.2}
+.pin::after{content:"";position:absolute;left:50%;top:100%;width:1px;height:6px;background:var(--muted)}
+.pin:hover{border-color:var(--accent);color:var(--accent-ink)}
+.pin:focus-visible{outline:2px solid var(--accent)}
+#strip{display:block;width:100%;touch-action:none;cursor:crosshair}
+#strip:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+#readout{position:absolute;right:10px;top:44px;z-index:20;pointer-events:none;display:none;
+  background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:6px;padding:6px 10px;font-family:ui-monospace,Menlo,Consolas,monospace;
+  font-size:12.5px;font-variant-numeric:tabular-nums;box-shadow:var(--shadow)}
+#readout b{color:var(--accent-ink);font-weight:600}
+#tooltip{position:absolute;z-index:30;pointer-events:none;display:none;max-width:300px;
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);
+  padding:9px 12px;font-size:12.5px;line-height:1.45}
+#tooltip .tt-t{font-weight:650;margin-bottom:2px}
+#tooltip .tt-f{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;color:var(--accent-ink);margin-bottom:5px}
+#tooltip .tt-s{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px}
+#tooltip .sw{width:9px;height:9px;border-radius:2px;flex:0 0 auto}
+#tooltip .tt-more{margin-top:5px;color:var(--muted);font-size:11px;font-style:italic}
+.zoomctl{position:absolute;left:10px;top:44px;z-index:20;display:flex;flex-direction:column;gap:5px}
+.zoomctl button{width:30px;height:30px;border-radius:6px;border:1px solid var(--line);
+  background:var(--panel);color:var(--ink);font:600 15px system-ui;cursor:pointer;line-height:1}
+.zoomctl button:hover{border-color:var(--accent);color:var(--accent-ink)}
+.zoomctl button:focus-visible{outline:2px solid var(--accent)}
+.hint{position:absolute;left:50px;top:48px;z-index:10;font-size:11.5px;color:var(--muted);pointer-events:none;
+  background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:3px 9px;opacity:.92}
+
+#mini{display:block;width:100%;height:44px;margin-top:8px;border:1px solid var(--line);
+  border-radius:8px;background:var(--surface);cursor:pointer;touch-action:none}
+
+/* ── panels ── */
+.panels{display:grid;grid-template-columns:1fr 340px;gap:16px;margin-top:16px;align-items:start}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.panel h2{font-family:"Bahnschrift","Avenir Next Condensed","Arial Narrow",system-ui,sans-serif;
+  font-size:13px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--muted);margin:0 0 10px}
+#detail .d-nick{font-size:21px;font-weight:700;line-height:1.2;margin:2px 0 2px}
+#detail .d-range{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;
+  color:var(--accent-ink);margin-bottom:10px;font-variant-numeric:tabular-nums}
+#detail .d-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.mchip{font-size:11px;letter-spacing:.05em;padding:3px 9px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+.mchip.warn{border-color:var(--accent);color:var(--accent-ink)}
+#detail table{border-collapse:collapse;width:100%;margin:4px 0 10px}
+#detail td{padding:4px 8px 4px 0;font-size:13.5px;vertical-align:top}
+#detail td.ps{font-size:10.5px;letter-spacing:.08em;color:var(--muted);white-space:nowrap;padding-top:6px}
+#detail .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:8px;vertical-align:baseline}
+#detail .d-note{font-size:14px;color:var(--ink)}
+#detail .d-fcc{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line);font-size:12.5px;color:var(--muted)}
+#detail .quirks{margin:8px 0 0;padding-left:18px;font-size:13.5px}
+#detail .quirks li{margin-bottom:5px}
+.navbtns{display:flex;gap:6px;margin-top:12px}
+.navbtns button{font:12.5px system-ui;padding:5px 11px;border:1px solid var(--line);border-radius:6px;
+  background:none;color:var(--ink);cursor:pointer}
+.navbtns button:hover{border-color:var(--accent);color:var(--accent-ink)}
+
+#legend .fam{display:flex;align-items:center;gap:9px;width:100%;text-align:left;
+  padding:6px 8px;border:1px solid transparent;border-radius:7px;background:none;
+  color:var(--ink);font:13.5px system-ui;cursor:pointer}
+#legend .fam:hover{background:var(--line2)}
+#legend .fam[aria-pressed="true"]{border-color:var(--accent);background:var(--line2)}
+#legend .fam:focus-visible{outline:2px solid var(--accent)}
+#legend .sw{width:13px;height:13px;border-radius:3px;flex:0 0 auto}
+#legend .fam .n{color:var(--muted);margin-left:auto;font-size:12px;font-variant-numeric:tabular-nums}
+#legend .keys{margin-top:12px;padding-top:12px;border-top:1px solid var(--line2);
+  display:flex;flex-direction:column;gap:7px;font-size:12.5px;color:var(--muted)}
+#legend .keys>div{display:flex;align-items:center;gap:9px}
+.key-hatch{width:13px;height:13px;border-radius:3px;border:1px solid var(--line);
+  background:repeating-linear-gradient(45deg,transparent 0 2px,var(--hatch) 2px 4px)}
+.key-dots{width:13px;height:13px;border-radius:3px;border:1px solid var(--line);
+  background-image:radial-gradient(var(--hatch) 1px,transparent 1px);background-size:4px 4px}
+.key-diff{width:13px;height:3px;border-top:2px dashed var(--accent)}
+#legend .clr{margin-top:10px;font:12px system-ui;padding:4px 10px;border:1px solid var(--line);
+  border-radius:6px;background:none;color:var(--muted);cursor:pointer;display:none}
+#legend .clr.on{display:inline-block}
+
+/* ── howto / footer ── */
+details.howto{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:0 18px}
+details.howto summary{cursor:pointer;padding:13px 0;font-family:"Bahnschrift","Avenir Next Condensed","Arial Narrow",system-ui,sans-serif;
+  font-size:13px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+details.howto summary:focus-visible{outline:2px solid var(--accent)}
+details.howto .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:4px 26px;padding:2px 0 16px}
+details.howto h3{font-size:13px;margin:10px 0 4px}
+details.howto p{font-size:13.5px;color:var(--muted);margin:0 0 8px;max-width:64ch}
+details.howto kbd{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;background:var(--line2);
+  border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+footer{margin-top:22px;padding-top:14px;border-top:1px solid var(--line);
+  font-size:12.5px;color:var(--muted);line-height:1.6}
+footer p{max-width:88ch;margin:0 0 6px}
+
+@media (max-width:900px){
+  .panels{grid-template-columns:1fr}
+  .brand h1{font-size:27px}
+  .hint{display:none}
+}
+@media (prefers-reduced-motion: reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="brand">
+    <h1>SPEC<span class="tune">T</span>RA</h1>
+    <div class="tag">Radio Frequency Allocation Explorer · 3 kHz – 300 GHz</div>
+  </div>
+  <div class="authbar">
+    <label for="auth">Regulator</label>
+    <select id="auth" aria-label="Select regulatory authority"></select>
+    <span class="regchip" id="regchip"></span>
+    <span class="statline" id="statline"></span>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="searchbox">
+    <input id="search" type="text" placeholder="Search — “wifi”, “distress”, “101.1”, “13.56 MHz”…"
+      autocomplete="off" aria-label="Search bands and frequencies">
+    <div id="results" role="listbox"></div>
+  </div>
+  <div class="chips" id="chips"><span class="lbl">Jump to</span></div>
+</div>
+
+<div class="scope">
+  <div id="pinrow"></div>
+  <canvas id="strip" tabindex="0" aria-label="Zoomable spectrum allocation chart. Use arrow keys to pan, plus and minus to zoom, 0 to reset."></canvas>
+  <div class="zoomctl">
+    <button id="zin"  title="Zoom in (+)" aria-label="Zoom in">+</button>
+    <button id="zout" title="Zoom out (−)" aria-label="Zoom out">−</button>
+    <button id="zfit" title="Reset view (0)" aria-label="Reset view">⤢</button>
+  </div>
+  <div class="hint">scroll / pinch to zoom · drag to pan · click a band</div>
+  <div id="readout" class="mono"></div>
+  <div id="tooltip"></div>
+</div>
+<canvas id="mini" aria-label="Spectrum overview minimap"></canvas>
+
+<section class="panels">
+  <article class="panel" id="detail" aria-live="polite"></article>
+  <aside class="panel" id="legend">
+    <h2>Radio services</h2>
+    <div id="fams"></div>
+    <button class="clr" id="clearfam">Show all services</button>
+    <div class="keys">
+      <div><span class="key-hatch"></span> Unlicensed / ISM — anyone may transmit</div>
+      <div><span class="key-dots"></span> Passive quiet band — all transmitters banned</div>
+      <div id="diffkey" style="display:none"><span class="key-diff"></span> Differs from the FCC table</div>
+    </div>
+  </aside>
+</section>
+
+<details class="howto">
+  <summary>How to read this chart</summary>
+  <div class="cols">
+    <div>
+      <h3>The scale is logarithmic</h3>
+      <p>Each tenfold jump in frequency gets equal width, just like the NTIA wall chart. The entire AM dial occupies as much of this map as everything from 30 to 300 GHz — zoom in and the detail keeps coming.</p>
+      <h3>CAPITALS outrank lowercase</h3>
+      <p>ITU convention: services in CAPITALS are <b>primary</b> — they get protection from interference. Lowercase services are <b>secondary</b>: welcome, but they must accept interference and cause none.</p>
+    </div>
+    <div>
+      <h3>Bands stack when shared</h3>
+      <p>Most bands host several services at once — each colored row in a column is one co-allocated service. Click any band for the full story; click a service in the legend to light up its territory across the whole spectrum.</p>
+      <h3>Compare regulators</h3>
+      <p>Switch the regulator menu and watch the map rearrange: Japan’s FM dial starts at 76 MHz, Europe’s longwave has no US counterpart, Australia’s CB lives at 476 MHz. Amber dashes mark every band that differs from the FCC table.</p>
+    </div>
+    <div>
+      <h3>Controls</h3>
+      <p>Scroll or pinch to zoom · drag to pan · double-click to dive · <kbd>←</kbd><kbd>→</kbd> pan · <kbd>+</kbd><kbd>−</kbd> zoom · <kbd>0</kbd> full view. The minimap below the chart always shows where you are; drag it to travel.</p>
+      <h3>Rulers</h3>
+      <p>Above the bands: ITU designators (VLF … EHF) and IEEE radar letters (L, S, C, X, Ku …). Below: frequency and wavelength — frequency × wavelength always equals the speed of light.</p>
+    </div>
+  </div>
+</details>
+
+<footer>
+  <p><b>SPECTRA</b> is an educational homage to the NTIA <i>United States Frequency Allocations</i> wall chart (2003 edition), rebuilt as a live instrument. Allocations are simplified from the FCC Online Table (47 CFR §2.106), Ofcom’s Frequency Allocation Table, Japan’s MIC assignment plans, the ACMA Australian table, and ISED Canada’s CTFA.</p>
+  <p>Band edges, service lists and notes are trimmed for teaching, not engineering — always consult the official tables before keying a transmitter. λ = c/f, and there is no cell service in a passive quiet band.</p>
+</footer>
+</div>

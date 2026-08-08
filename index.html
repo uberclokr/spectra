@@ -1,0 +1,1707 @@
+<title>SPECTRA — Radio Spectrum Explorer</title>
+<style>
+:root{
+  --bg:#F7F6F1; --surface:#F4F3EE; --panel:#FCFBF7; --ink:#2A2C30; --muted:#6C6F76;
+  --line:#DBD8CE; --line2:#E9E7DE; --accent:#B4720E; --accent-ink:#8F5A08;
+  --sel:#B4720E;
+  --f-bc:#c56c21; --f-mob:#3967c1; --f-fx:#8a5619; --f-mar:#008a77; --f-aero:#1996c3;
+  --f-nav:#559647; --f-sat:#7358b3; --f-ham:#b79420; --f-sci:#b55499; --f-none:#b3b2a7;
+  --hatch:rgba(42,44,48,.22); --shadow:0 1px 3px rgba(40,36,20,.08),0 8px 24px rgba(40,36,20,.07);
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#0C0F14; --surface:#12161D; --panel:#171C24; --ink:#E8E6E1; --muted:#98A0AB;
+  --line:#262C36; --line2:#1D232D; --accent:#E8A13D; --accent-ink:#E8A13D;
+  --sel:#E8A13D;
+  --f-bc:#c77434; --f-mob:#4571c6; --f-fx:#985b0b; --f-mar:#00907d; --f-aero:#3398c2;
+  --f-nav:#5d9850; --f-sat:#7860b5; --f-ham:#af8e2a; --f-sci:#b55b9a; --f-none:#4a5058;
+  --hatch:rgba(232,230,225,.20); --shadow:0 1px 3px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+}}
+:root[data-theme="dark"]{
+  --bg:#0C0F14; --surface:#12161D; --panel:#171C24; --ink:#E8E6E1; --muted:#98A0AB;
+  --line:#262C36; --line2:#1D232D; --accent:#E8A13D; --accent-ink:#E8A13D;
+  --sel:#E8A13D;
+  --f-bc:#c77434; --f-mob:#4571c6; --f-fx:#985b0b; --f-mar:#00907d; --f-aero:#3398c2;
+  --f-nav:#5d9850; --f-sat:#7860b5; --f-ham:#af8e2a; --f-sci:#b55b9a; --f-none:#4a5058;
+  --hatch:rgba(232,230,225,.20); --shadow:0 1px 3px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+}
+:root[data-theme="light"]{
+  --bg:#F7F6F1; --surface:#F4F3EE; --panel:#FCFBF7; --ink:#2A2C30; --muted:#6C6F76;
+  --line:#DBD8CE; --line2:#E9E7DE; --accent:#B4720E; --accent-ink:#8F5A08;
+  --sel:#B4720E;
+  --f-bc:#c56c21; --f-mob:#3967c1; --f-fx:#8a5619; --f-mar:#008a77; --f-aero:#1996c3;
+  --f-nav:#559647; --f-sat:#7358b3; --f-ham:#b79420; --f-sci:#b55499; --f-none:#b3b2a7;
+  --hatch:rgba(42,44,48,.22); --shadow:0 1px 3px rgba(40,36,20,.08),0 8px 24px rgba(40,36,20,.07);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+.disp{font-family:"Bahnschrift","Avenir Next Condensed","Helvetica Neue",("Arial Narrow"),"Arial Narrow",system-ui,sans-serif}
+.mono{font-family:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+
+.wrap{max-width:1280px;margin:0 auto;padding:0 20px 48px}
+
+/* ── header ── */
+header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;flex-wrap:wrap;
+  padding:26px 0 14px;border-bottom:2px solid var(--ink)}
+.brand h1{font-family:"Bahnschrift","Avenir Next Condensed","Arial Narrow",system-ui,sans-serif;
+  font-size:34px;font-weight:700;letter-spacing:.24em;margin:0;line-height:1}
+.brand h1 .tune{color:var(--accent)}
+.brand .tag{font-size:11px;letter-spacing:.22em;color:var(--muted);text-transform:uppercase;margin-top:6px}
+.authbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.authbar label{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+select#auth{
+  font:600 15px/1.2 system-ui,sans-serif;color:var(--ink);background:var(--panel);
+  border:1px solid var(--line);border-radius:6px;padding:8px 10px;cursor:pointer}
+select#auth:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.regchip{font-size:11px;letter-spacing:.08em;padding:4px 9px;border:1px solid var(--line);
+  border-radius:99px;color:var(--muted);white-space:nowrap}
+.statline{font-size:12px;color:var(--muted)}
+
+/* ── toolbar ── */
+.toolbar{display:flex;gap:14px;align-items:center;padding:12px 0 10px;flex-wrap:wrap}
+.searchbox{position:relative;flex:0 1 300px;min-width:220px}
+.searchbox input{width:100%;padding:8px 12px;border:1px solid var(--line);border-radius:6px;
+  background:var(--panel);color:var(--ink);font:14px system-ui,sans-serif}
+.searchbox input::placeholder{color:var(--muted)}
+.searchbox input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+#results{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:40;background:var(--panel);
+  border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);overflow:hidden;display:none}
+#results button{display:flex;justify-content:space-between;gap:12px;width:100%;text-align:left;
+  padding:8px 12px;border:0;background:none;color:var(--ink);font:13px system-ui;cursor:pointer}
+#results button:hover,#results button:focus-visible{background:var(--line2);outline:none}
+#results .rf{color:var(--accent-ink);font-size:12px;white-space:nowrap}
+.chips{display:flex;gap:6px;overflow-x:auto;flex:1;padding-bottom:2px;scrollbar-width:thin}
+.chips .lbl{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);
+  align-self:center;white-space:nowrap;margin-right:2px}
+.chip{flex:0 0 auto;font:12.5px system-ui;padding:5px 11px;border:1px solid var(--line);
+  border-radius:99px;background:var(--panel);color:var(--ink);cursor:pointer;white-space:nowrap}
+.chip:hover{border-color:var(--accent);color:var(--accent-ink)}
+.chip:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+
+/* ── scope ── */
+.scope{position:relative;border:1px solid var(--line);border-radius:10px;background:var(--surface);
+  box-shadow:var(--shadow);overflow:hidden}
+#pinrow{position:relative;height:34px;border-bottom:1px solid var(--line2)}
+.pin{position:absolute;top:5px;transform:translateX(-50%);font:11.5px system-ui;
+  padding:3px 8px;border-radius:99px;border:1px solid var(--line);background:var(--panel);
+  color:var(--ink);cursor:pointer;white-space:nowrap;line-height:1.2}
+.pin::after{content:"";position:absolute;left:50%;top:100%;width:1px;height:6px;background:var(--muted)}
+.pin:hover{border-color:var(--accent);color:var(--accent-ink)}
+.pin:focus-visible{outline:2px solid var(--accent)}
+#strip{display:block;width:100%;touch-action:none;cursor:crosshair}
+#strip:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+#readout{position:absolute;right:10px;top:44px;z-index:20;pointer-events:none;display:none;
+  background:var(--panel);border:1px solid var(--line);border-left:3px solid var(--accent);
+  border-radius:6px;padding:6px 10px;font-family:ui-monospace,Menlo,Consolas,monospace;
+  font-size:12.5px;font-variant-numeric:tabular-nums;box-shadow:var(--shadow)}
+#readout b{color:var(--accent-ink);font-weight:600}
+#tooltip{position:absolute;z-index:30;pointer-events:none;display:none;max-width:300px;
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);
+  padding:9px 12px;font-size:12.5px;line-height:1.45}
+#tooltip .tt-t{font-weight:650;margin-bottom:2px}
+#tooltip .tt-f{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;color:var(--accent-ink);margin-bottom:5px}
+#tooltip .tt-s{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px}
+#tooltip .sw{width:9px;height:9px;border-radius:2px;flex:0 0 auto}
+#tooltip .tt-more{margin-top:5px;color:var(--muted);font-size:11px;font-style:italic}
+.zoomctl{position:absolute;left:10px;top:44px;z-index:20;display:flex;flex-direction:column;gap:5px}
+.zoomctl button{width:30px;height:30px;border-radius:6px;border:1px solid var(--line);
+  background:var(--panel);color:var(--ink);font:600 15px system-ui;cursor:pointer;line-height:1}
+.zoomctl button:hover{border-color:var(--accent);color:var(--accent-ink)}
+.zoomctl button:focus-visible{outline:2px solid var(--accent)}
+.hint{position:absolute;left:50px;top:48px;z-index:10;font-size:11.5px;color:var(--muted);pointer-events:none;
+  background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:3px 9px;opacity:.92}
+
+#mini{display:block;width:100%;height:44px;margin-top:8px;border:1px solid var(--line);
+  border-radius:8px;background:var(--surface);cursor:pointer;touch-action:none}
+
+/* ── panels ── */
+.panels{display:grid;grid-template-columns:1fr 340px;gap:16px;margin-top:16px;align-items:start}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.panel h2{font-family:"Bahnschrift","Avenir Next Condensed","Arial Narrow",system-ui,sans-serif;
+  font-size:13px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--muted);margin:0 0 10px}
+#detail .d-nick{font-size:21px;font-weight:700;line-height:1.2;margin:2px 0 2px}
+#detail .d-range{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;
+  color:var(--accent-ink);margin-bottom:10px;font-variant-numeric:tabular-nums}
+#detail .d-meta{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.mchip{font-size:11px;letter-spacing:.05em;padding:3px 9px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+.mchip.warn{border-color:var(--accent);color:var(--accent-ink)}
+#detail table{border-collapse:collapse;width:100%;margin:4px 0 10px}
+#detail td{padding:4px 8px 4px 0;font-size:13.5px;vertical-align:top}
+#detail td.ps{font-size:10.5px;letter-spacing:.08em;color:var(--muted);white-space:nowrap;padding-top:6px}
+#detail .sw{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:8px;vertical-align:baseline}
+#detail .d-note{font-size:14px;color:var(--ink)}
+#detail .d-fcc{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line);font-size:12.5px;color:var(--muted)}
+#detail .quirks{margin:8px 0 0;padding-left:18px;font-size:13.5px}
+#detail .quirks li{margin-bottom:5px}
+.navbtns{display:flex;gap:6px;margin-top:12px}
+.navbtns button{font:12.5px system-ui;padding:5px 11px;border:1px solid var(--line);border-radius:6px;
+  background:none;color:var(--ink);cursor:pointer}
+.navbtns button:hover{border-color:var(--accent);color:var(--accent-ink)}
+
+#legend .fam{display:flex;align-items:center;gap:9px;width:100%;text-align:left;
+  padding:6px 8px;border:1px solid transparent;border-radius:7px;background:none;
+  color:var(--ink);font:13.5px system-ui;cursor:pointer}
+#legend .fam:hover{background:var(--line2)}
+#legend .fam[aria-pressed="true"]{border-color:var(--accent);background:var(--line2)}
+#legend .fam:focus-visible{outline:2px solid var(--accent)}
+#legend .sw{width:13px;height:13px;border-radius:3px;flex:0 0 auto}
+#legend .fam .n{color:var(--muted);margin-left:auto;font-size:12px;font-variant-numeric:tabular-nums}
+#legend .keys{margin-top:12px;padding-top:12px;border-top:1px solid var(--line2);
+  display:flex;flex-direction:column;gap:7px;font-size:12.5px;color:var(--muted)}
+#legend .keys>div{display:flex;align-items:center;gap:9px}
+.key-hatch{width:13px;height:13px;border-radius:3px;border:1px solid var(--line);
+  background:repeating-linear-gradient(45deg,transparent 0 2px,var(--hatch) 2px 4px)}
+.key-dots{width:13px;height:13px;border-radius:3px;border:1px solid var(--line);
+  background-image:radial-gradient(var(--hatch) 1px,transparent 1px);background-size:4px 4px}
+.key-diff{width:13px;height:3px;border-top:2px dashed var(--accent)}
+#legend .clr{margin-top:10px;font:12px system-ui;padding:4px 10px;border:1px solid var(--line);
+  border-radius:6px;background:none;color:var(--muted);cursor:pointer;display:none}
+#legend .clr.on{display:inline-block}
+
+/* ── howto / footer ── */
+details.howto{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:0 18px}
+details.howto summary{cursor:pointer;padding:13px 0;font-family:"Bahnschrift","Avenir Next Condensed","Arial Narrow",system-ui,sans-serif;
+  font-size:13px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+details.howto summary:focus-visible{outline:2px solid var(--accent)}
+details.howto .cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:4px 26px;padding:2px 0 16px}
+details.howto h3{font-size:13px;margin:10px 0 4px}
+details.howto p{font-size:13.5px;color:var(--muted);margin:0 0 8px;max-width:64ch}
+details.howto kbd{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11px;background:var(--line2);
+  border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+footer{margin-top:22px;padding-top:14px;border-top:1px solid var(--line);
+  font-size:12.5px;color:var(--muted);line-height:1.6}
+footer p{max-width:88ch;margin:0 0 6px}
+
+@media (max-width:900px){
+  .panels{grid-template-columns:1fr}
+  .brand h1{font-size:27px}
+  .hint{display:none}
+}
+@media (prefers-reduced-motion: reduce){
+  *{animation:none!important;transition:none!important}
+}
+</style>
+
+<div class="wrap">
+<header class="top">
+  <div class="brand">
+    <h1>SPEC<span class="tune">T</span>RA</h1>
+    <div class="tag">Radio Frequency Allocation Explorer · 3 kHz – 300 GHz</div>
+  </div>
+  <div class="authbar">
+    <label for="auth">Regulator</label>
+    <select id="auth" aria-label="Select regulatory authority"></select>
+    <span class="regchip" id="regchip"></span>
+    <span class="statline" id="statline"></span>
+  </div>
+</header>
+
+<div class="toolbar">
+  <div class="searchbox">
+    <input id="search" type="text" placeholder="Search — “wifi”, “distress”, “101.1”, “13.56 MHz”…"
+      autocomplete="off" aria-label="Search bands and frequencies">
+    <div id="results" role="listbox"></div>
+  </div>
+  <div class="chips" id="chips"><span class="lbl">Jump to</span></div>
+</div>
+
+<div class="scope">
+  <div id="pinrow"></div>
+  <canvas id="strip" tabindex="0" aria-label="Zoomable spectrum allocation chart. Use arrow keys to pan, plus and minus to zoom, 0 to reset."></canvas>
+  <div class="zoomctl">
+    <button id="zin"  title="Zoom in (+)" aria-label="Zoom in">+</button>
+    <button id="zout" title="Zoom out (−)" aria-label="Zoom out">−</button>
+    <button id="zfit" title="Reset view (0)" aria-label="Reset view">⤢</button>
+  </div>
+  <div class="hint">scroll / pinch to zoom · drag to pan · click a band</div>
+  <div id="readout" class="mono"></div>
+  <div id="tooltip"></div>
+</div>
+<canvas id="mini" aria-label="Spectrum overview minimap"></canvas>
+
+<section class="panels">
+  <article class="panel" id="detail" aria-live="polite"></article>
+  <aside class="panel" id="legend">
+    <h2>Radio services</h2>
+    <div id="fams"></div>
+    <button class="clr" id="clearfam">Show all services</button>
+    <div class="keys">
+      <div><span class="key-hatch"></span> Unlicensed / ISM — anyone may transmit</div>
+      <div><span class="key-dots"></span> Passive quiet band — all transmitters banned</div>
+      <div id="diffkey" style="display:none"><span class="key-diff"></span> Differs from the FCC table</div>
+    </div>
+  </aside>
+</section>
+
+<details class="howto">
+  <summary>How to read this chart</summary>
+  <div class="cols">
+    <div>
+      <h3>The scale is logarithmic</h3>
+      <p>Each tenfold jump in frequency gets equal width, just like the NTIA wall chart. The entire AM dial occupies as much of this map as everything from 30 to 300 GHz — zoom in and the detail keeps coming.</p>
+      <h3>CAPITALS outrank lowercase</h3>
+      <p>ITU convention: services in CAPITALS are <b>primary</b> — they get protection from interference. Lowercase services are <b>secondary</b>: welcome, but they must accept interference and cause none.</p>
+    </div>
+    <div>
+      <h3>Bands stack when shared</h3>
+      <p>Most bands host several services at once — each colored row in a column is one co-allocated service. Click any band for the full story; click a service in the legend to light up its territory across the whole spectrum.</p>
+      <h3>Compare regulators</h3>
+      <p>Switch the regulator menu and watch the map rearrange: Japan’s FM dial starts at 76 MHz, Europe’s longwave has no US counterpart, Australia’s CB lives at 476 MHz. Amber dashes mark every band that differs from the FCC table.</p>
+    </div>
+    <div>
+      <h3>Controls</h3>
+      <p>Scroll or pinch to zoom · drag to pan · double-click to dive · <kbd>←</kbd><kbd>→</kbd> pan · <kbd>+</kbd><kbd>−</kbd> zoom · <kbd>0</kbd> full view. The minimap below the chart always shows where you are; drag it to travel.</p>
+      <h3>Rulers</h3>
+      <p>Above the bands: ITU designators (VLF … EHF) and IEEE radar letters (L, S, C, X, Ku …). Below: frequency and wavelength — frequency × wavelength always equals the speed of light.</p>
+    </div>
+  </div>
+</details>
+
+<footer>
+  <p><b>SPECTRA</b> is an educational homage to the NTIA <i>United States Frequency Allocations</i> wall chart (2003 edition), rebuilt as a live instrument. Allocations are simplified from the FCC Online Table (47 CFR §2.106), Ofcom’s Frequency Allocation Table, Japan’s MIC assignment plans, the ACMA Australian table, and ISED Canada’s CTFA.</p>
+  <p>Band edges, service lists and notes are trimmed for teaching, not engineering — always consult the official tables before keying a transmitter. λ = c/f, and there is no cell service in a passive quiet band.</p>
+</footer>
+</div>
+<script>
+"use strict";
+/* SPECTRA dataset — simplified educational allocation tables.
+   Band record: [loHz, hiHz, [services...], nick?, note?, flags?]
+   Service CAPITALS = primary, lowercase = secondary (ITU convention).
+   flags: "i" = ISM/unlicensed overlay, "q" = passive quiet band. */
+const k = 1e3, M = 1e6, G = 1e9;
+
+const FAMS = {
+  bc:  { name: "Broadcasting" },
+  mob: { name: "Mobile & cellular" },
+  fx:  { name: "Fixed links" },
+  mar: { name: "Maritime" },
+  aero:{ name: "Aeronautical" },
+  nav: { name: "Radar & navigation" },
+  sat: { name: "Satellite" },
+  ham: { name: "Amateur radio" },
+  sci: { name: "Science & passive" },
+  none:{ name: "Not allocated" },
+};
+const FAM_ORDER = ["bc","mob","fx","mar","aero","nav","sat","ham","sci","none"];
+const FAM_RULES = [
+  [/not allocated/, "none"],
+  [/amateur/, "ham"],
+  [/broadcasting/, "bc"],
+  [/maritime/, "mar"],
+  [/aeronautical/, "aero"],
+  [/astronomy|earth exploration|space research|meteorological|standard frequency/, "sci"],
+  [/space operations|inter-satellite/, "sat"],
+  [/radionavigation-satellite/, "nav"],
+  [/satellite/, "sat"],
+  [/radiolocation|radionavigation|radiodetermination/, "nav"],
+  [/citizens|mobile/, "mob"],
+  [/fixed/, "fx"],
+];
+function famOf(svc){
+  const t = svc.toLowerCase();
+  for (const [re, f] of FAM_RULES) if (re.test(t)) return f;
+  return "none";
+}
+function isPrimary(svc){
+  const letters = svc.replace(/[^a-zA-Z]/g, "");
+  return letters === letters.toUpperCase();
+}
+
+/* ───────────────────────── FCC / United States base table ─────────────────── */
+const BASE = [
+[3*k,9*k,["Not allocated"],"Natural radio","No allocations below 9 kHz — this is the realm of natural radio: lightning “sferics,” whistlers, and the dawn chorus of the magnetosphere. Listen with a coil and a soundcard."],
+[9*k,14*k,["RADIONAVIGATION"],"","Long-wave hyperbolic navigation lived here (Omega, retired 1997). Waves at these frequencies duct between Earth and ionosphere clear around the planet."],
+[14*k,59.75*k,["FIXED","MARITIME MOBILE"],"Submarine comms","VLF penetrates tens of metres of seawater — navies broadcast one-way traffic to submerged submarines (the US Navy’s Cutler, Maine array radiates 1.8 megawatts at 24 kHz)."],
+[59.75*k,60.25*k,["STANDARD FREQUENCY AND TIME SIGNAL (60 kHz)"],"Radio-controlled clocks","WWVB in Colorado syncs millions of “atomic” wall clocks at 60 kHz; the UK’s MSF and Japan’s JJY share the frequency."],
+[60.25*k,70*k,["FIXED","MARITIME MOBILE"]],
+[70*k,90*k,["FIXED","MARITIME MOBILE","Radiolocation"]],
+[90*k,110*k,["RADIONAVIGATION","Fixed"],"LORAN legacy","LORAN-C guided ships and aircraft from 100 kHz until GPS won; several nations keep the band for eLoran as a GPS backup."],
+[110*k,130*k,["FIXED","MARITIME MOBILE"]],
+[130*k,135.7*k,["FIXED","MARITIME MOBILE"]],
+[135.7*k,137.8*k,["FIXED","MARITIME MOBILE","Amateur"],"2200 m amateur","The lowest ham band. With ~1 W radiated from garden-filling antennas, operators span oceans on multi-hour digital modes like WSPR."],
+[137.8*k,160*k,["FIXED","MARITIME MOBILE"]],
+[160*k,190*k,["FIXED"],"“LowFER” experiments","US hobbyists may run unlicensed beacons here — 1 W input, 15 m of antenna, and infinite patience."],
+[190*k,285*k,["AERONAUTICAL RADIONAVIGATION"],"NDB beacons","Non-directional beacons still Morse their two-letter IDs to aircraft ADF receivers — 1930s navigation on the air in 2026."],
+[285*k,325*k,["MARITIME RADIONAVIGATION (radiobeacons)","Aeronautical radionavigation"],"DGPS beacons","The old marine radiobeacon band, recycled to broadcast differential-GPS corrections."],
+[325*k,435*k,["AERONAUTICAL RADIONAVIGATION"],"NDB beacons"],
+[435*k,472*k,["MARITIME MOBILE"]],
+[472*k,479*k,["MARITIME MOBILE","Amateur"],"630 m amateur","Granted at WRC-12 — the first new LF/MF amateur band in decades."],
+[479*k,510*k,["MARITIME MOBILE"],"NAVTEX & old 500","NAVTEX prints navigational warnings at 490 and 518 kHz. 500 kHz was the international Morse distress frequency from Titanic until 1999, when GMDSS retired the radio officer."],
+[510*k,525*k,["MOBILE","AERONAUTICAL RADIONAVIGATION"]],
+[525*k,1705*k,["BROADCASTING"],"AM broadcast","The AM dial: channels every 10 kHz in the Americas (9 kHz elsewhere). At night the D-layer fades and skywave carries clear-channel stations across the continent. The 1610–1705 “expanded band” arrived in the 1990s."],
+[1705*k,1800*k,["FIXED","MOBILE","RADIOLOCATION"]],
+[1800*k,2000*k,["AMATEUR"],"160 m “Top Band”","Long, quiet winter nights reward patient CW operators — the closest ham radio gets to fly fishing."],
+[2000*k,2170*k,["MARITIME MOBILE","FIXED"]],
+[2170*k,2194*k,["MOBILE (distress and calling)"],"2182 kHz distress","Marine MF voice distress and calling — still watched by coast stations beyond VHF range."],
+[2194*k,2495*k,["FIXED","MOBILE"]],
+[2495*k,2505*k,["STANDARD FREQUENCY AND TIME SIGNAL (2500 kHz)"],"WWV 2.5 MHz","WWV has announced the time non-stop since 1923 — the oldest continuously operating radio station in the United States."],
+[2505*k,2850*k,["FIXED","MOBILE"]],
+[2850*k,3155*k,["AERONAUTICAL MOBILE (R)"],"Oceanic ATC","HF voice for transoceanic flights, organized into “families” of frequencies per ocean region."],
+[3155*k,3400*k,["FIXED","Mobile"]],
+[3400*k,3500*k,["AERONAUTICAL MOBILE (R)"]],
+[3500*k,4000*k,["AMATEUR"],"80 m amateur","Regional nets by day, continental DX after dark."],
+[4000*k,4063*k,["FIXED"]],
+[4063*k,4438*k,["MARITIME MOBILE"],"","Ship-to-shore HF; 4125 kHz is a distress and calling channel."],
+[4438*k,4650*k,["FIXED","MOBILE"]],
+[4650*k,4750*k,["AERONAUTICAL MOBILE (R)"]],
+[4750*k,4995*k,["FIXED","BROADCASTING"],"Tropical bands","Domestic shortwave for equatorial countries, where MW static from thunderstorms is brutal."],
+[4995*k,5005*k,["STANDARD FREQUENCY AND TIME SIGNAL (5000 kHz)"],"WWV 5 MHz"],
+[5005*k,5450*k,["FIXED","Mobile"],"60 m channels","US amateurs get five shared channels near 5.35 MHz inside this fixed-service stretch — the politest band in ham radio."],
+[5450*k,5730*k,["AERONAUTICAL MOBILE (R)","AERONAUTICAL MOBILE (OR)"]],
+[5730*k,5900*k,["FIXED"]],
+[5900*k,6200*k,["BROADCASTING"],"49 m shortwave","Prime evening international broadcast band."],
+[6200*k,6525*k,["MARITIME MOBILE"]],
+[6525*k,6765*k,["AERONAUTICAL MOBILE (R)"]],
+[6765*k,7000*k,["FIXED","Mobile"],"","Includes the 6.78 MHz ISM designation."],
+[7000*k,7300*k,["AMATEUR"],"40 m amateur","The workhorse ham band — usable somewhere on Earth at any hour."],
+[7300*k,7400*k,["BROADCASTING"],"41 m shortwave"],
+[7400*k,8100*k,["FIXED","Broadcasting"]],
+[8100*k,8815*k,["MARITIME MOBILE"]],
+[8815*k,9040*k,["AERONAUTICAL MOBILE (R)"]],
+[9040*k,9400*k,["FIXED"]],
+[9400*k,9900*k,["BROADCASTING"],"31 m shortwave","The most crowded international broadcast band."],
+[9900*k,9995*k,["FIXED"]],
+[9995*k,10005*k,["STANDARD FREQUENCY AND TIME SIGNAL (10 MHz)"],"WWV 10 MHz"],
+[10005*k,10100*k,["AERONAUTICAL MOBILE (R)"]],
+[10100*k,10150*k,["FIXED","Amateur"],"30 m amateur","CW and digital only, by worldwide gentlemen’s agreement."],
+[10150*k,11175*k,["FIXED","Mobile"]],
+[11175*k,11400*k,["AERONAUTICAL MOBILE (OR)"],"Military HFGCS","11175 kHz carries the US military’s High Frequency Global Communications System — source of the cryptic Emergency Action Messages shortwave listeners collect."],
+[11400*k,11600*k,["FIXED"]],
+[11600*k,12100*k,["BROADCASTING"],"25 m shortwave"],
+[12100*k,12230*k,["FIXED"]],
+[12230*k,13200*k,["MARITIME MOBILE"]],
+[13200*k,13360*k,["AERONAUTICAL MOBILE (R)","AERONAUTICAL MOBILE (OR)"]],
+[13360*k,13410*k,["RADIO ASTRONOMY","Fixed"],"","Protected sliver for radio astronomy.","q"],
+[13410*k,13570*k,["FIXED","Mobile"],"13.56 MHz ISM","Every contactless card tap, NFC phone payment, and warehouse RFID gate resonates at 13.56 MHz.","i"],
+[13570*k,13870*k,["BROADCASTING"],"22 m shortwave"],
+[13870*k,14000*k,["FIXED","Mobile"]],
+[14000*k,14350*k,["AMATEUR"],"20 m amateur","The king of DX bands — worldwide propagation nearly every day of the solar cycle."],
+[14350*k,14990*k,["FIXED","Mobile"]],
+[14990*k,15010*k,["STANDARD FREQUENCY AND TIME SIGNAL (15 MHz)"],"WWV 15 MHz"],
+[15010*k,15100*k,["AERONAUTICAL MOBILE (OR)"]],
+[15100*k,15800*k,["BROADCASTING"],"19 m shortwave"],
+[15800*k,16360*k,["FIXED"]],
+[16360*k,17410*k,["MARITIME MOBILE"]],
+[17410*k,17550*k,["FIXED"]],
+[17550*k,17900*k,["BROADCASTING"],"16 m shortwave"],
+[17900*k,18030*k,["AERONAUTICAL MOBILE (R)","AERONAUTICAL MOBILE (OR)"]],
+[18030*k,18068*k,["FIXED"]],
+[18068*k,18168*k,["AMATEUR"],"17 m amateur","A WARC-79 band: contest-free by agreement, famously relaxed."],
+[18168*k,18780*k,["FIXED","Mobile"]],
+[18780*k,18900*k,["MARITIME MOBILE"]],
+[18900*k,19680*k,["FIXED","Broadcasting"]],
+[19680*k,19800*k,["MARITIME MOBILE"]],
+[19800*k,19990*k,["FIXED"]],
+[19990*k,20010*k,["STANDARD FREQUENCY AND TIME SIGNAL (20 MHz)"],"WWV 20 MHz"],
+[20010*k,21000*k,["FIXED","Mobile"]],
+[21000*k,21450*k,["AMATEUR"],"15 m amateur","Comes alive with the sunspot cycle."],
+[21450*k,21850*k,["BROADCASTING"],"13 m shortwave"],
+[21850*k,22000*k,["FIXED","Aeronautical mobile (R)"]],
+[22000*k,22855*k,["MARITIME MOBILE"]],
+[22855*k,23200*k,["FIXED"]],
+[23200*k,23350*k,["AERONAUTICAL MOBILE (OR)"]],
+[23350*k,24890*k,["FIXED","LAND MOBILE"]],
+[24890*k,24990*k,["AMATEUR"],"12 m amateur"],
+[24990*k,25010*k,["STANDARD FREQUENCY AND TIME SIGNAL (25 MHz)"]],
+[25010*k,25550*k,["FIXED","MOBILE except aeronautical"]],
+[25550*k,25670*k,["RADIO ASTRONOMY"],"","","q"],
+[25670*k,26100*k,["BROADCASTING"],"11 m shortwave","Little used now; some countries trialled DRM digital radio here."],
+[26100*k,26965*k,["FIXED","MOBILE","Radiolocation"],"","Includes the 26.957–27.283 MHz ISM slice."],
+[26965*k,27405*k,["MOBILE (Citizens Band)"],"CB radio","40 channels, 4 watts, no licence. The 1970s CB craze gave the world “10-4, good buddy” — and 27.12 MHz remains an ISM workhorse.","i"],
+[27405*k,28000*k,["FIXED","MOBILE"]],
+[28000*k,29700*k,["AMATEUR"],"10 m amateur","When the Sun cooperates, 100 milliwatts crosses the Atlantic."],
+[29700*k,30000*k,["FIXED","MOBILE"]],
+/* ── VHF ── */
+[30*M,50*M,["FIXED","LAND MOBILE"],"VHF low band","“Low band” public-safety and highway radio — prone to summertime sporadic-E skip arriving from a thousand km away."],
+[50*M,54*M,["AMATEUR"],"6 m “magic band”","Dead for months, then suddenly wide open to another continent. Hence the nickname."],
+[54*M,72*M,["BROADCASTING"],"TV channels 2–4","Legacy VHF television — channel 2 begins at 54 MHz."],
+[72*M,74.8*M,["FIXED","MOBILE"],"","Radio-control models and paging once ruled this sliver."],
+[74.8*M,75.2*M,["AERONAUTICAL RADIONAVIGATION"],"75 MHz markers","Runway marker beacons fire a 75 MHz fan straight up; cockpit lamps blink blue-amber-white as you cross them."],
+[75.2*M,76*M,["FIXED","MOBILE"]],
+[76*M,88*M,["BROADCASTING"],"TV channels 5–6","Analog channel 6 audio sat at 87.75 MHz — listenable at the bottom of any FM radio (“Franken-FM” stations exploited this for years)."],
+[88*M,108*M,["BROADCASTING"],"FM broadcast","The FM dial: 200 kHz channels, with 88–92 MHz reserved for noncommercial stations — why college radio lives on the left of the dial."],
+[108*M,117.975*M,["AERONAUTICAL RADIONAVIGATION"],"VOR & ILS","VOR beacons and ILS localizers guide every instrument approach; pilots verify each by its Morse ident."],
+[117.975*M,137*M,["AERONAUTICAL MOBILE (R)"],"VHF airband","Pilot–controller voice, still amplitude modulation so a stuck mic can’t fully block the channel. 121.5 MHz is “Guard,” monitored by every airliner."],
+[137*M,138*M,["SPACE OPERATIONS","METEOROLOGICAL-SATELLITE (space-to-Earth)"],"Weather-sat downlink","Point a $30 SDR dongle at the sky: NOAA APT and Meteor-M weather imagery downlinks here on every pass."],
+[138*M,144*M,["FIXED","MOBILE"],"","US military air-ground and land mobile."],
+[144*M,148*M,["AMATEUR","AMATEUR-SATELLITE"],"2 m amateur","The most-used ham band on Earth: repeaters, ISS contacts, and 146.52 MHz simplex calling."],
+[148*M,150.05*M,["MOBILE-SATELLITE (Earth-to-space)","FIXED","MOBILE"],"","Uplinks for little-LEO data constellations (Orbcomm)."],
+[150.05*M,156*M,["MOBILE","FIXED"],"VHF land mobile","Police, fire, and business “high band” two-way radio."],
+[156*M,157.45*M,["MARITIME MOBILE"],"Marine VHF","Channel 16 (156.8 MHz) is the international distress and calling channel, watched by every bridge and coast station."],
+[157.45*M,161.575*M,["MOBILE","MARITIME MOBILE"],"","Railroads and land mobile interleave with marine duplex channels."],
+[161.575*M,162.025*M,["MARITIME MOBILE"],"AIS","Every large vessel broadcasts position on AIS 1 and 2 (161.975 / 162.025 MHz) — the raw feed behind live ship-tracking maps."],
+[162.025*M,174*M,["MOBILE","FIXED"],"NOAA Weather Radio","Seven channels around 162.5 MHz carry continuous forecasts and alerts to receivers that wake themselves for warnings."],
+[174*M,216*M,["BROADCASTING"],"TV channels 7–13","VHF-high television — still prime digital-TV real estate after two repacks."],
+[216*M,220*M,["FIXED","MARITIME MOBILE","Land mobile"],"","AMTS coastal telephony that never took off; now leased for narrowband data."],
+[220*M,222*M,["FIXED","MOBILE"]],
+[222*M,225*M,["AMATEUR"],"1.25 m amateur","A ham band that exists only in the Americas — ITU Region 1 never allocated it."],
+[225*M,328.6*M,["FIXED","MOBILE"],"Military UHF airband","NATO air operations and carrier flight decks, in AM voice; 243 MHz is military Guard."],
+[328.6*M,335.4*M,["AERONAUTICAL RADIONAVIGATION"],"ILS glideslope","Paired with the localizer below 118 MHz, this signal defines the 3° descent path to the runway threshold."],
+[335.4*M,399.9*M,["FIXED","MOBILE"],"","More military air-ground, plus UHF follow-on satcom."],
+[399.9*M,400.05*M,["RADIONAVIGATION-SATELLITE"]],
+[400.05*M,400.15*M,["STANDARD FREQUENCY AND TIME SIGNAL-SATELLITE"]],
+[400.15*M,406*M,["METEOROLOGICAL AIDS","METEOROLOGICAL-SATELLITE","SPACE RESEARCH"],"Radiosondes","Twice a day, ~900 weather balloons worldwide radio their ascent from here — the backbone of every forecast model."],
+[406*M,406.1*M,["MOBILE-SATELLITE (Earth-to-space)"],"406 MHz rescue beacons","EPIRBs and PLBs burst to the SARSAT constellation; 50,000+ lives saved. Never test one indoors — the Air Force will find you."],
+[406.1*M,410*M,["FIXED","MOBILE","RADIO ASTRONOMY"],"","","q"],
+[410*M,420*M,["FIXED","MOBILE"],"","Federal land mobile."],
+[420*M,450*M,["RADIOLOCATION","Amateur"],"70 cm amateur","Hams share 30 MHz with long-range surveillance radars (PAVE PAWS). 446.0 MHz is simplex calling."],
+[450*M,470*M,["MOBILE","FIXED"],"UHF land mobile","Business radio plus the FRS/GMRS walkie-talkies at 462/467 MHz sold in every sporting-goods store."],
+[470*M,608*M,["BROADCASTING"],"UHF TV 14–36","Post-repack digital TV heartland; unlicensed “white space” devices squeeze between stations."],
+[608*M,614*M,["RADIO ASTRONOMY","Mobile-satellite"],"Channel 37","No TV station in North America may broadcast on channel 37 — it belongs to radio telescopes and hospital telemetry.","q"],
+[614*M,698*M,["MOBILE","FIXED"],"600 MHz 5G (n71)","Auctioned away from broadcasters in 2017 for $19.8 B; now a nationwide low-band 5G layer."],
+[698*M,806*M,["MOBILE","FIXED","BROADCASTING"],"700 MHz LTE","Freed by the 2009 analog-TV shutdown. LTE bands 12/13/14 — including FirstNet, the public-safety network."],
+[806*M,896*M,["MOBILE","FIXED"],"800 MHz cellular","Where US cellular began (AMPS, 1983); now ESMR and LTE band 5."],
+[896*M,902*M,["MOBILE","FIXED"],"","Narrowband PCS and paging."],
+[902*M,928*M,["RADIOLOCATION","Fixed","Mobile","Amateur"],"915 MHz ISM","America’s unlicensed sub-GHz: LoRa, Z-Wave, toll tags, baby monitors — plus the 33 cm ham band. In Europe these exact frequencies are GSM uplink.","i"],
+[928*M,960*M,["FIXED","MOBILE"],"","Paging and multi-address SCADA links."],
+[960*M,1215*M,["AERONAUTICAL RADIONAVIGATION"],"DME / ADS-B / GPS L5","DME and TACAN interrogators, Mode-S at 1030/1090 MHz — every flight-tracker feeds on 1090 ADS-B — and GPS L5 at 1176.45 MHz."],
+[1215*M,1240*M,["RADIONAVIGATION-SATELLITE","RADIOLOCATION"],"GPS L2","GPS L2 (1227.60) and GLONASS share with long-range air-route radars."],
+[1240*M,1300*M,["RADIOLOCATION","Amateur"],"23 cm amateur","Hams and amateur TV dodge radars; Galileo E6 squeezes in at 1278.75."],
+[1300*M,1350*M,["AERONAUTICAL RADIONAVIGATION","Radiolocation"],"","Long-range en-route surveillance radars."],
+[1350*M,1400*M,["FIXED","MOBILE","RADIOLOCATION"]],
+[1400*M,1427*M,["EARTH EXPLORATION-SATELLITE (passive)","RADIO ASTRONOMY","SPACE RESEARCH (passive)"],"Hydrogen line","All transmissions banned worldwide. 1420.4 MHz is the 21 cm line of neutral hydrogen — how we map the galaxy’s spiral arms, and where SETI listens first.","q"],
+[1427*M,1435*M,["FIXED","MOBILE"]],
+[1435*M,1525*M,["MOBILE (aeronautical telemetry)"],"Flight-test telemetry","Every new airframe streams its shakedown data here — Edwards AFB’s bread and butter."],
+[1525*M,1559*M,["MOBILE-SATELLITE (space-to-Earth)"],"L-band satcom down","Inmarsat safety services to ships and airliners."],
+[1559*M,1610*M,["RADIONAVIGATION-SATELLITE","AERONAUTICAL RADIONAVIGATION"],"GPS L1","1575.42 MHz: GPS L1, Galileo E1, BeiDou B1C. Arguably the most economically important 50 MHz in the spectrum — jam it and ships, planes, phones, and stock-exchange timestamps all feel it."],
+[1610*M,1626.5*M,["MOBILE-SATELLITE (Earth-to-space)","RADIO ASTRONOMY"],"Iridium","Iridium’s 66 satellites serve phones here while astronomers try to hear the 1612 MHz OH line through the noise."],
+[1626.5*M,1660.5*M,["MOBILE-SATELLITE (Earth-to-space)"],"Satphone uplink"],
+[1660.5*M,1668*M,["RADIO ASTRONOMY","SPACE RESEARCH (passive)"],"","OH maser lines.","q"],
+[1668*M,1675*M,["METEOROLOGICAL AIDS","FIXED","MOBILE"]],
+[1675*M,1695*M,["METEOROLOGICAL-SATELLITE (space-to-Earth)"],"GOES downlink","GOES weather imagery lands here — and the “Ligado” L-band fight raged next door for a decade."],
+[1695*M,1710*M,["MOBILE"],"AWS-3 uplink"],
+[1710*M,1780*M,["MOBILE"],"AWS/PCS uplink","The phone-to-tower half of AWS-1/3 (bands 4 and 66)."],
+[1780*M,1850*M,["FIXED","MOBILE"],"","Federal systems, gradually cleared for sharing."],
+[1850*M,1990*M,["MOBILE"],"PCS 1900","The 1995 PCS auctions — the FCC’s first big ones — built 2G here (band 2)."],
+[1990*M,2025*M,["MOBILE","MOBILE-SATELLITE"]],
+[2025*M,2110*M,["SPACE OPERATIONS","FIXED","MOBILE"],"","Spacecraft command uplinks and TV broadcast-auxiliary."],
+[2110*M,2200*M,["MOBILE"],"AWS downlink","Tower-to-phone half of AWS (band 66)."],
+[2200*M,2290*M,["SPACE OPERATIONS","FIXED"],"TT&C downlink","Satellite housekeeping telemetry — ISS voice and data included."],
+[2290*M,2300*M,["SPACE RESEARCH (deep space)"],"Deep Space Network","Reserved for craft beyond 2 million km. Voyager 1’s 19-watt whisper arrives here at 10⁻¹⁸ watts.","q"],
+[2300*M,2305*M,["Amateur"],"13 cm (lower)"],
+[2305*M,2320*M,["MOBILE","FIXED"],"WCS"],
+[2320*M,2345*M,["BROADCASTING-SATELLITE (sound)"],"SiriusXM","Satellite radio beamed straight to car antennas, with terrestrial repeaters for tunnels."],
+[2345*M,2360*M,["MOBILE","FIXED"],"WCS"],
+[2360*M,2390*M,["MOBILE (aeronautical telemetry)"],"","More flight-test telemetry."],
+[2390*M,2400*M,["Amateur"],"13 cm (upper)"],
+[2400*M,2483.5*M,["FIXED","MOBILE","RADIOLOCATION","Amateur"],"2.4 GHz ISM","The junk band that ate the world: Wi-Fi, Bluetooth, ZigBee, drones — all dodging microwave ovens at 2.45 GHz. Unlicensed because nobody wanted it; now priceless.","i"],
+[2483.5*M,2495*M,["MOBILE-SATELLITE (space-to-Earth)"],"Globalstar down"],
+[2495*M,2690*M,["MOBILE"],"2.5 GHz (n41)","Born as educational TV (EBS/BRS), collected by Sprint, now T-Mobile’s mid-band 5G spine."],
+[2690*M,2700*M,["EARTH EXPLORATION-SATELLITE (passive)","RADIO ASTRONOMY"],"","","q"],
+[2700*M,2900*M,["AERONAUTICAL RADIONAVIGATION","Radiolocation"],"ASR & NEXRAD","Airport surveillance radars, plus the WSR-88D weather radars that paint your rain map."],
+[2900*M,3100*M,["RADIOLOCATION","MARITIME RADIONAVIGATION"],"Marine S-band radar"],
+[3100*M,3300*M,["RADIOLOCATION"],"","Shipboard and airborne radars."],
+[3300*M,3450*M,["RADIOLOCATION","Amateur"],"9 cm amateur","US hams lost most of 3.3–3.45 GHz in the 2020s reallocations — spectrum pressure in action."],
+[3450*M,3550*M,["MOBILE","RADIOLOCATION"],"3.45 GHz 5G","Auction 110 (2021): $22.5 B for 100 MHz of mid-band, time-shared with DoD radars."],
+[3550*M,3700*M,["MOBILE (CBRS)","RADIOLOCATION"],"CBRS","A three-tier sharing experiment: Navy radars first, priority licensees second, anyone with a certified radio third — refereed in real time by cloud spectrum controllers."],
+[3700*M,3980*M,["MOBILE","FIXED-SATELLITE (space-to-Earth)"],"C-band 5G (n77)","The $81 B auction. Satellite TV squeezed upward; radar-altimeter interference fears delayed airline rollouts in 2022."],
+[3980*M,4200*M,["FIXED-SATELLITE (space-to-Earth)","FIXED"],"C-band satellite","Classic big-dish downlink — rain-fade-proof and beloved by broadcasters."],
+[4200*M,4400*M,["AERONAUTICAL RADIONAVIGATION (radio altimeters)"],"Radar altimeters","Every airliner measures its height above ground here on final approach — the reason the C-band 5G fight mattered."],
+[4400*M,4940*M,["FIXED","MOBILE"],"","Military trunking and tactical comms."],
+[4940*M,4990*M,["MOBILE"],"4.9 GHz public safety"],
+[4990*M,5000*M,["RADIO ASTRONOMY"],"","","q"],
+[5000*M,5150*M,["AERONAUTICAL RADIONAVIGATION","AERONAUTICAL MOBILE-SATELLITE (R)"],"","Microwave landing systems (mostly leapfrogged by GPS) and future airport datalinks."],
+[5150*M,5250*M,["MOBILE","FIXED-SATELLITE (Earth-to-space)"],"Wi-Fi U-NII-1","5 GHz Wi-Fi’s bottom 100 MHz, shared with satellite feeder uplinks.","i"],
+[5250*M,5350*M,["RADIOLOCATION","EARTH EXPLORATION-SATELLITE (active)","MOBILE"],"Wi-Fi U-NII-2 (DFS)","Wi-Fi must listen for radar and vacate — Dynamic Frequency Selection. Spaceborne SAR images the Earth through the same window.","i"],
+[5350*M,5470*M,["EARTH EXPLORATION-SATELLITE (active)","AERONAUTICAL RADIONAVIGATION"],"The Wi-Fi gap","No Wi-Fi here: airborne weather radar and satellite SAR won that argument."],
+[5470*M,5725*M,["RADIOLOCATION","MARITIME RADIONAVIGATION","MOBILE"],"Wi-Fi U-NII-2C (DFS)","More radar-dodging Wi-Fi; Terminal Doppler Weather Radars near 5.6 GHz trigger the vacate rule.","i"],
+[5725*M,5850*M,["RADIOLOCATION","MOBILE","Amateur"],"5.8 GHz ISM","Wi-Fi’s upper band, drone FPV video, and toll tags; hams hold 5650–5925 as secondary.","i"],
+[5850*M,5925*M,["MOBILE (ITS)","FIXED-SATELLITE (Earth-to-space)"],"C-V2X","Reserved 20 years for talking cars that never shipped; re-split in 2020 — 45 MHz to Wi-Fi, 30 MHz to cellular-V2X."],
+[5925*M,7125*M,["FIXED","FIXED-SATELLITE (Earth-to-space)","MOBILE"],"6 GHz Wi-Fi 6E/7","In 2020 the FCC opened all 1200 MHz to unlicensed Wi-Fi — low-power indoor, sharing with thousands of licensed microwave links. The largest unlicensed grant ever made.","i"],
+[7125*M,7250*M,["FIXED"],"","Federal microwave; eyed for future sharing."],
+[7250*M,7750*M,["FIXED-SATELLITE (space-to-Earth)","FIXED"],"X-band milsatcom down"],
+[7750*M,7900*M,["METEOROLOGICAL-SATELLITE (space-to-Earth)"]],
+[7900*M,8400*M,["FIXED-SATELLITE (Earth-to-space)","EARTH EXPLORATION-SATELLITE (space-to-Earth)"],"X-band up / EO down","Milsatcom uplinks; 8025–8400 rains down imagery from Landsat, Sentinel, and friends."],
+[8400*M,8500*M,["SPACE RESEARCH (space-to-Earth)"],"Deep-space X-band","The DSN’s main downlink: Mars rovers, Voyager, and every interplanetary probe.","q"],
+[8500*M,9000*M,["RADIOLOCATION"],"X-band radar"],
+[9000*M,9200*M,["AERONAUTICAL RADIONAVIGATION","Radiolocation"],"Precision approach radar"],
+[9200*M,9300*M,["RADIOLOCATION","MARITIME RADIONAVIGATION"],"SART","9 GHz search-and-rescue transponders paint a dotted trail to survivors on any ship’s radar."],
+[9300*M,9500*M,["AERONAUTICAL RADIONAVIGATION","RADIOLOCATION"],"Airborne weather radar","The radar in every airliner’s nose (9.375 GHz)."],
+[9500*M,10000*M,["RADIOLOCATION"],"Marine X-band radar"],
+[10*G,10.5*G,["RADIOLOCATION","Amateur"],"3 cm amateur / X-band","10 GHz ham microwave (rain-scatter DX is a real sport) and 10.525 GHz police speed radar."],
+[10.5*G,10.7*G,["RADIOLOCATION","FIXED"]],
+[10.7*G,11.7*G,["FIXED-SATELLITE (space-to-Earth)","FIXED"],"Ku downlink","Ku satellite downlink — Starlink terminals receive 10.7–12.7 GHz — plus terrestrial microwave backbones."],
+[11.7*G,12.2*G,["FIXED-SATELLITE (space-to-Earth)"],"Ku DTH","North American direct-to-home satellite territory."],
+[12.2*G,12.7*G,["BROADCASTING-SATELLITE"],"DBS","DirecTV and DISH beam from geostationary orbit — 22,236 miles per hop."],
+[12.7*G,13.25*G,["FIXED","MOBILE","FIXED-SATELLITE (Earth-to-space)"],"ENG / Ku uplink","TV news trucks and satellite uplinks."],
+[13.25*G,13.4*G,["AERONAUTICAL RADIONAVIGATION (doppler)"]],
+[13.4*G,13.75*G,["RADIOLOCATION"],"Ku radar"],
+[13.75*G,14*G,["FIXED-SATELLITE (Earth-to-space)","RADIOLOCATION"]],
+[14*G,14.5*G,["FIXED-SATELLITE (Earth-to-space)"],"VSAT / Starlink up","The uplink half of Ku: airline Wi-Fi antennas and Starlink dishes transmit here."],
+[14.5*G,15.35*G,["FIXED","MOBILE"],"","Military point-to-point."],
+[15.35*G,15.4*G,["EARTH EXPLORATION-SATELLITE (passive)","RADIO ASTRONOMY"],"","","q"],
+[15.4*G,15.7*G,["AERONAUTICAL RADIONAVIGATION"]],
+[15.7*G,17.3*G,["RADIOLOCATION"],"Ku radars"],
+[17.3*G,17.7*G,["FIXED-SATELLITE (Earth-to-space)","Radiolocation"],"BSS feeder up"],
+[17.7*G,18.3*G,["FIXED","FIXED-SATELLITE (space-to-Earth)"],"18 GHz links"],
+[18.3*G,18.8*G,["FIXED-SATELLITE (space-to-Earth)"],"Ka down"],
+[18.8*G,19.3*G,["FIXED-SATELLITE (space-to-Earth)"],"NGSO Ka down","Reserved for non-geostationary fleets — Starlink and Kuiper gateway downlinks."],
+[19.3*G,19.7*G,["FIXED-SATELLITE","MOBILE-SATELLITE"],"MSS feeders"],
+[19.7*G,20.2*G,["FIXED-SATELLITE (space-to-Earth)","MOBILE-SATELLITE"],"Ka consumer down","Satellite home-internet downlink (Viasat, HughesNet)."],
+[20.2*G,21.2*G,["FIXED-SATELLITE","MOBILE-SATELLITE (government)"],"WGS milsatcom"],
+[21.2*G,22*G,["EARTH EXPLORATION-SATELLITE","FIXED","MOBILE"]],
+[22*G,23.6*G,["FIXED","MOBILE"],"23 GHz links","Short urban microwave hops; the 22.235 GHz water-vapor line makes rain fade fierce."],
+[23.6*G,24*G,["EARTH EXPLORATION-SATELLITE (passive)","RADIO ASTRONOMY","SPACE RESEARCH (passive)"],"Water-vapor sounding","Passive-only: weather satellites sense humidity at 23.8 GHz. The 2019 fight over 5G emissions next door went all the way to WRC-19.","q"],
+[24*G,24.25*G,["RADIOLOCATION","Amateur"],"24 GHz ISM","Automatic door openers, K-band police radar (24.15), and a ham band.","i"],
+[24.25*G,24.45*G,["MOBILE"],"24 GHz 5G (n258)","mmWave 5G: enormous bandwidth, tiny range — blocked by your own hand."],
+[24.45*G,24.75*G,["MOBILE","INTER-SATELLITE"]],
+[24.75*G,25.25*G,["MOBILE","FIXED-SATELLITE (Earth-to-space)"],"n258 upper"],
+[25.25*G,27.5*G,["FIXED","MOBILE","INTER-SATELLITE","EARTH EXPLORATION-SATELLITE (space-to-Earth)"],"26 GHz","Europe’s pioneer mmWave 5G band; in the US, satellite data downlinks and fixed links."],
+[27.5*G,28.35*G,["MOBILE","FIXED-SATELLITE (Earth-to-space)"],"28 GHz 5G (n261)","Verizon’s original mmWave 5G, shared with satellite uplinks."],
+[28.35*G,29.1*G,["FIXED-SATELLITE (Earth-to-space)"],"Ka up (ESIM)","Uplinks from earth stations in motion — planes, ships, trains."],
+[29.1*G,29.5*G,["FIXED-SATELLITE (Earth-to-space)","MOBILE-SATELLITE"]],
+[29.5*G,30*G,["FIXED-SATELLITE (Earth-to-space)","MOBILE-SATELLITE"],"Ka consumer up"],
+[30*G,31*G,["FIXED-SATELLITE (Earth-to-space)","MOBILE-SATELLITE (government)"]],
+[31*G,31.3*G,["FIXED","MOBILE"]],
+[31.3*G,31.8*G,["EARTH EXPLORATION-SATELLITE (passive)","RADIO ASTRONOMY","SPACE RESEARCH (passive)"],"","Another protected passive window.","q"],
+[31.8*G,33.4*G,["RADIONAVIGATION"],"32 GHz","Also the DSN’s future deep-space Ka downlink."],
+[33.4*G,36*G,["RADIOLOCATION"],"Ka radar","35 GHz cloud-profiling radars and missile seekers."],
+[36*G,37*G,["EARTH EXPLORATION-SATELLITE","FIXED","MOBILE"]],
+[37*G,40*G,["MOBILE","FIXED","FIXED-SATELLITE"],"39 GHz 5G (n260)","AT&T and Verizon mmWave; 37.0–37.6 is a shared federal/commercial experiment."],
+[40*G,42*G,["FIXED-SATELLITE (space-to-Earth)","BROADCASTING-SATELLITE"],"V-band down"],
+[42*G,43.5*G,["FIXED","MOBILE"]],
+[43.5*G,47*G,["MOBILE-SATELLITE","RADIONAVIGATION-SATELLITE"],"Milsatcom V-band"],
+[47*G,47.2*G,["AMATEUR","AMATEUR-SATELLITE"],"47 GHz amateur"],
+[47.2*G,48.2*G,["MOBILE"],"47 GHz 5G (n262)"],
+[48.2*G,50.2*G,["FIXED-SATELLITE (Earth-to-space)"],"V-band up"],
+[50.2*G,50.4*G,["EARTH EXPLORATION-SATELLITE (passive)","SPACE RESEARCH (passive)"],"","Oxygen-temperature sounding.","q"],
+[50.4*G,52.6*G,["FIXED","MOBILE","FIXED-SATELLITE"]],
+[52.6*G,54.25*G,["EARTH EXPLORATION-SATELLITE (passive)","SPACE RESEARCH (passive)"],"O₂ sounding","Weather models ingest these passive soundings every six hours.","q"],
+[54.25*G,57*G,["INTER-SATELLITE","EARTH EXPLORATION-SATELLITE (passive)"]],
+[57*G,64*G,["FIXED","MOBILE","INTER-SATELLITE","RADIOLOCATION"],"60 GHz WiGig","Oxygen soaks up 15 dB/km at 60 GHz — signals die fast, so everyone can reuse the band. Unlicensed 57–71 GHz hosts WiGig, wireless HDMI, and gesture radar.","i"],
+[64*G,71*G,["FIXED","MOBILE","INTER-SATELLITE"],"60 GHz upper","US unlicensed extension to 71 GHz.","i"],
+[71*G,76*G,["FIXED","FIXED-SATELLITE","MOBILE"],"E-band","Light-licensed 70/80 GHz “wireless fiber” — multi-gigabit backhaul hops."],
+[76*G,81*G,["RADIOLOCATION"],"77 GHz car radar","Every modern car’s adaptive cruise and emergency braking radar lives here."],
+[81*G,86*G,["FIXED","FIXED-SATELLITE","MOBILE"],"E-band upper"],
+[86*G,92*G,["EARTH EXPLORATION-SATELLITE (passive)","RADIO ASTRONOMY","SPACE RESEARCH (passive)"],"W-band window","Passive-only, worldwide.","q"],
+[92*G,95*G,["FIXED","MOBILE","RADIOLOCATION"],"94 GHz cloud radar","CloudSat profiled clouds at 94 GHz; airports use it to see through fog."],
+[95*G,100*G,["RADIOLOCATION","RADIONAVIGATION"]],
+[100*G,102*G,["EARTH EXPLORATION-SATELLITE (passive)","RADIO ASTRONOMY"],"","","q"],
+[102*G,109.5*G,["FIXED","MOBILE"]],
+[109.5*G,111.8*G,["EARTH EXPLORATION-SATELLITE (passive)","RADIO ASTRONOMY","SPACE RESEARCH (passive)"],"","","q"],
+[111.8*G,114.25*G,["FIXED","MOBILE"]],
+[114.25*G,122.25*G,["EARTH EXPLORATION-SATELLITE (passive)","INTER-SATELLITE","FIXED","MOBILE"],"118 GHz O₂ line"],
+[122.25*G,123*G,["FIXED","MOBILE","Amateur"],"122 GHz amateur","ISM at 122.5 GHz; hams have bridged 100+ km up here.","i"],
+[123*G,130*G,["FIXED-SATELLITE","RADIONAVIGATION-SATELLITE"]],
+[130*G,134*G,["RADIO ASTRONOMY","INTER-SATELLITE"]],
+[134*G,141*G,["RADIOLOCATION","Amateur"],"134 GHz amateur"],
+[141*G,148.5*G,["FIXED","MOBILE","RADIOLOCATION"]],
+[148.5*G,151.5*G,["EARTH EXPLORATION-SATELLITE (passive)","RADIO ASTRONOMY"],"","","q"],
+[151.5*G,164*G,["RADIOLOCATION","FIXED"]],
+[164*G,167*G,["EARTH EXPLORATION-SATELLITE (passive)","RADIO ASTRONOMY"],"","","q"],
+[167*G,174.8*G,["FIXED","MOBILE","INTER-SATELLITE"]],
+[174.8*G,191.8*G,["EARTH EXPLORATION-SATELLITE (passive)","INTER-SATELLITE"],"183 GHz water line","The strongest water-vapor line — hurricane-watching sounders stare at it.","q"],
+[191.8*G,200*G,["INTER-SATELLITE","EARTH EXPLORATION-SATELLITE (passive)"]],
+[200*G,209*G,["EARTH EXPLORATION-SATELLITE (passive)","RADIO ASTRONOMY"],"","Passive-only.","q"],
+[209*G,226*G,["FIXED","FIXED-SATELLITE","RADIO ASTRONOMY"]],
+[226*G,231.5*G,["RADIOLOCATION"]],
+[231.5*G,235*G,["FIXED","FIXED-SATELLITE"]],
+[235*G,238*G,["EARTH EXPLORATION-SATELLITE (passive)","FIXED-SATELLITE"]],
+[238*G,241*G,["RADIOLOCATION","RADIONAVIGATION"]],
+[241*G,248*G,["RADIOLOCATION","Amateur"],"","ISM at 245 GHz.","i"],
+[248*G,250*G,["AMATEUR","AMATEUR-SATELLITE"],"Highest amateur band"],
+[250*G,252*G,["EARTH EXPLORATION-SATELLITE (passive)","RADIO ASTRONOMY"],"","","q"],
+[252*G,275*G,["FIXED","MOBILE","RADIONAVIGATION-SATELLITE"]],
+[275*G,300*G,["Not allocated"],"THz frontier","Above 275 GHz the international table simply ends — only passive bands are “identified.” 6G researchers prototype terabit links up here, where the map runs out."],
+];
+/* ── Authorities ──────────────────────────────────────────────────────────────
+   Each non-FCC authority is the FCC base with patch spans replaced.
+   patch: [spanLoHz, spanHiHz, [band records tiling the span]]
+   landmarks: [lo, hi, label, tour?] — tour landmarks also become jump chips. */
+
+const LM_WORLD = [
+  [59.75*k,60.25*k,"Radio clocks",0],
+  [1400*M,1427*M,"Hydrogen line",0],
+  [121.5*M,121.5*M,"Guard 121.5",0],
+  [156.8*M,156.8*M,"Channel 16",0],
+  [406*M,406.1*M,"Rescue beacons",0],
+  [1090*M,1090*M,"ADS-B",0],
+  [1559*M,1610*M,"GPS / GNSS",1],
+  [2400*M,2483.5*M,"2.4 GHz Wi-Fi",1],
+  [2450*M,2450*M,"Microwave oven",0],
+  [12.2*G,12.7*G,"Satellite TV",0],
+  [57*G,71*G,"60 GHz WiGig",0],
+  [76*G,81*G,"Car radar",1],
+  [94*G,94*G,"Cloud radar",0],
+  [174.8*G,191.8*G,"183 GHz sounder",0],
+];
+
+const AUTH = {
+
+fcc: {
+  name:"FCC", flag:"🇺🇸", country:"United States", region:"ITU Region 2",
+  full:"Federal Communications Commission",
+  about:"Independent US regulator since 1934. It governs commercial, state, and local spectrum; federal users (military, NOAA, NASA) answer to NTIA — the two-column split behind the famous wall chart this explorer is modeled on.",
+  quirks:[
+    "Invented spectrum auctions (1994) — the C-band sale alone raised $81 billion.",
+    "CBRS three-tier sharing at 3.5 GHz is a world first: cloud referees admit users in priority order.",
+    "Opened all 1200 MHz of 6 GHz to Wi-Fi in 2020 — the largest unlicensed grant ever.",
+    "AM channels every 10 kHz and FM at 88–108 MHz: the Region 2 pattern.",
+  ],
+  patches:[],
+  landmarks:[
+    [525*k,1705*k,"AM dial",1],
+    [9995*k,10005*k,"WWV",0],
+    [5900*k,15800*k,"Shortwave",1],
+    [26965*k,27405*k,"CB radio",1],
+    [88*M,108*M,"FM dial",1],
+    [108*M,137*M,"Airband",1],
+    [156*M,162.05*M,"Marine VHF",1],
+    [162.4*M,162.55*M,"NOAA Weather",0],
+    [462.55*M,467.725*M,"FRS/GMRS",0],
+    [470*M,608*M,"TV broadcast",1],
+    [902*M,928*M,"LoRa / Z-Wave",1],
+    [3550*M,3700*M,"CBRS",1],
+    [3700*M,3980*M,"C-band 5G",1],
+    [5925*M,7125*M,"Wi-Fi 6E",1],
+    [27.5*G,28.35*G,"5G mmWave",1],
+  ],
+},
+
+ofcom: {
+  name:"Ofcom", flag:"🇬🇧", country:"United Kingdom", region:"ITU Region 1",
+  full:"Office of Communications",
+  about:"The UK’s converged regulator (2003), heir to the Radiocommunications Agency. A pioneer of technology-neutral licences, spectrum trading, and local shared access — and the keeper of Europe’s longwave heritage.",
+  quirks:[
+    "BBC Radio 4 still broadcasts on 198 kHz longwave — a band the Americas never had.",
+    "PMR446 gives Europe licence-free walkie-talkies in 0.2 MHz where the US has FRS in 25×.",
+    "Hams get a 4 m band at 70 MHz that barely exists anywhere else.",
+    "Shared Access licences let a factory or farm rent its own local 5G at 3.8–4.2 GHz.",
+  ],
+  patches:[
+    [130*k,285*k,[
+      [130*k,135.7*k,["FIXED","MARITIME MOBILE"]],
+      [135.7*k,137.8*k,["FIXED","MARITIME MOBILE","Amateur"],"2200 m amateur","Same worldwide ham sliver as the US."],
+      [137.8*k,148.5*k,["FIXED","MARITIME MOBILE"]],
+      [148.5*k,283.5*k,["BROADCASTING"],"Longwave broadcast","BBC Radio 4 on 198 kHz — the Shipping Forecast, cricket, and the Radio Teleswitch that still flips electricity meters. Region 1 only: the Americas never had a longwave dial."],
+      [283.5*k,285*k,["MARITIME RADIONAVIGATION"]],
+    ]],
+    [525*k,1800*k,[
+      [525*k,1606.5*k,["BROADCASTING"],"MW broadcast","9 kHz channel raster (vs 10 kHz in the Americas). Home of talkSPORT and Absolute — and fading fast as Europe switches AM off."],
+      [1606.5*k,1800*k,["FIXED","MOBILE"]],
+    ]],
+    [50*M,108*M,[
+      [50*M,52*M,["AMATEUR"],"6 m amateur"],
+      [52*M,70*M,["MOBILE","FIXED"],"Former TV Band I","405-line television lived at 45–68 MHz until 1985; business radio inherited the estate."],
+      [70*M,70.5*M,["AMATEUR","MOBILE"],"4 m amateur","A UK speciality — most of the world has no 70 MHz ham band."],
+      [70.5*M,74.8*M,["MOBILE","FIXED"]],
+      [74.8*M,75.2*M,["AERONAUTICAL RADIONAVIGATION"],"75 MHz markers"],
+      [75.2*M,87.5*M,["MOBILE","FIXED"],"","Private mobile radio mid-band."],
+      [87.5*M,108*M,["BROADCASTING"],"FM broadcast","87.5–108 with RDS — a European invention. BBC nationals occupy 88–94.6."],
+    ]],
+    [174*M,230*M,[
+      [174*M,230*M,["BROADCASTING"],"DAB Band III","UK radio’s digital home: DAB/DAB+ multiplexes in 1.712 MHz blocks. Television left Band III in 1985."],
+    ]],
+    [380*M,399.9*M,[
+      [380*M,399.9*M,["MOBILE"],"TETRA emergency services","Airwave — the blue-light TETRA network — holds on here until the Emergency Services Network finally replaces it."],
+    ]],
+    [420*M,470*M,[
+      [420*M,430*M,["RADIOLOCATION","FIXED","MOBILE"]],
+      [430*M,440*M,["AMATEUR","RADIOLOCATION"],"70 cm amateur","10 MHz wide here versus 30 MHz in the US."],
+      [440*M,446*M,["MOBILE","FIXED"]],
+      [446*M,446.2*M,["MOBILE"],"PMR446","Europe’s licence-free walkie-talkie channels — the Region 1 answer to FRS."],
+      [446.2*M,470*M,["MOBILE","FIXED"],"Business radio"],
+    ]],
+    [470*M,862*M,[
+      [470*M,694*M,["BROADCASTING"],"Freeview DTT","Six DVB-T/T2 multiplexes carry ~100 channels; wireless mics rent the white spaces, and channel 38 (606–614) is reserved for programme-making entirely."],
+      [694*M,790*M,["MOBILE"],"700 MHz 5G (n28)","Cleared of TV in 2020, auctioned 2021."],
+      [790*M,862*M,["MOBILE"],"800 MHz 4G (n20)","The 2013 4G auction band, freed by analogue switch-off."],
+    ]],
+    [862*M,960*M,[
+      [862*M,870*M,["MOBILE","Fixed"],"868 MHz SRD","Europe’s unlicensed sub-GHz: LoRaWAN, smart meters, key fobs — the mirror image of America’s 915 MHz.","i"],
+      [870*M,876*M,["MOBILE","FIXED"]],
+      [876*M,915*M,["MOBILE"],"GSM-R & 900 uplink","876–880 is railway GSM-R (train cab radio); above it, phones transmit (n8 up)."],
+      [915*M,921*M,["MOBILE","Fixed"],"915 MHz SRD","A recently opened higher-power SRD/RFID window.","i"],
+      [921*M,960*M,["MOBILE"],"900 MHz downlink","The band that made GSM a world standard in 1991."],
+    ]],
+    [1427*M,1525*M,[
+      [1427*M,1452*M,["FIXED","MOBILE"]],
+      [1452*M,1492*M,["MOBILE"],"L-band SDL (n32)","Downlink-only carriers that boost busy cells."],
+      [1492*M,1525*M,["FIXED","MOBILE"]],
+    ]],
+    [1710*M,2025*M,[
+      [1710*M,1785*M,["MOBILE"],"1800 MHz uplink (n3)","EE launched UK 4G here in 2012."],
+      [1785*M,1805*M,["MOBILE"],"Duplex gap","Wireless microphones squat in the 1800 MHz duplex gap."],
+      [1805*M,1880*M,["MOBILE"],"1800 MHz downlink (n3)"],
+      [1880*M,1900*M,["MOBILE"],"DECT","Every cordless home phone in Europe."],
+      [1900*M,1920*M,["MOBILE"],"Unpaired TDD","3G-auction leftovers, never much used."],
+      [1920*M,1980*M,["MOBILE"],"2100 uplink (n1)","The £22.5 billion 3G auction of 2000 — telecoms’ dot-com fever dream."],
+      [1980*M,2010*M,["MOBILE-SATELLITE (Earth-to-space)"],"MSS 2 GHz"],
+      [2010*M,2025*M,["MOBILE"],"Unpaired TDD"],
+    ]],
+    [2110*M,2200*M,[
+      [2110*M,2170*M,["MOBILE"],"2100 downlink (n1)"],
+      [2170*M,2200*M,["MOBILE-SATELLITE (space-to-Earth)"],"MSS 2 GHz down"],
+    ]],
+    [2495*M,2690*M,[
+      [2495*M,2500*M,["MOBILE-SATELLITE (space-to-Earth)"]],
+      [2500*M,2570*M,["MOBILE"],"2.6 GHz uplink (n7)"],
+      [2570*M,2620*M,["MOBILE"],"2.6 GHz TDD (n38)"],
+      [2620*M,2690*M,["MOBILE"],"2.6 GHz downlink (n7)","4G capacity layer, auctioned 2013."],
+    ]],
+    [3300*M,4200*M,[
+      [3300*M,3400*M,["RADIOLOCATION"]],
+      [3400*M,3800*M,["MOBILE"],"3.4–3.8 GHz 5G (n78)","The UK’s main 5G band, auctioned in 2018 and 2021."],
+      [3800*M,4200*M,["FIXED","FIXED-SATELLITE (space-to-Earth)"],"Shared Access","Ofcom’s local-licence scheme: anyone can rent private 5G for a factory, farm, or festival."],
+    ]],
+    [5925*M,7125*M,[
+      [5925*M,6425*M,["FIXED","FIXED-SATELLITE (Earth-to-space)","MOBILE"],"Wi-Fi 6E (lower)","The UK opened only the lower 500 MHz, low-power indoor — half of what the FCC granted.","i"],
+      [6425*M,7125*M,["FIXED","FIXED-SATELLITE (Earth-to-space)"],"Upper 6 GHz","Tug-of-war: Wi-Fi vs licensed 5G after WRC-23’s IMT identification. Ofcom is exploring hybrid sharing."],
+    ]],
+    [24.25*G,28.35*G,[
+      [24.25*G,26.5*G,["FIXED","INTER-SATELLITE","EARTH EXPLORATION-SATELLITE"],"","Lower part of Europe’s 26 GHz pioneer band."],
+      [26.5*G,27.5*G,["MOBILE"],"26 GHz 5G (n258)","Europe’s mmWave pioneer band, opened to UK licensees in 2025."],
+      [27.5*G,28.35*G,["FIXED-SATELLITE (Earth-to-space)"],"Ka uplink","No 28 GHz 5G here, unlike the US — kept for satellite."],
+    ]],
+  ],
+  landmarks:[
+    [148.5*k,283.5*k,"Longwave",1],
+    [525*k,1606.5*k,"MW dial",1],
+    [5900*k,15800*k,"Shortwave",0],
+    [87.5*M,108*M,"FM dial",1],
+    [108*M,137*M,"Airband",1],
+    [156*M,162.05*M,"Marine VHF",0],
+    [174*M,230*M,"DAB radio",1],
+    [446*M,446.2*M,"PMR446",1],
+    [470*M,694*M,"Freeview TV",1],
+    [862*M,870*M,"868 SRD / LoRa",1],
+    [1880*M,1900*M,"DECT",0],
+    [3400*M,3800*M,"5G n78",1],
+    [5925*M,6425*M,"Wi-Fi 6E",1],
+    [26.5*G,27.5*G,"26 GHz 5G",1],
+  ],
+},
+
+mic: {
+  name:"MIC", flag:"🇯🇵", country:"Japan", region:"ITU Region 3",
+  full:"Ministry of Internal Affairs and Communications (総務省)",
+  about:"Japan assigns spectrum through ministry allocation plans and comparative review — it is the only major economy that has never auctioned spectrum. It ran the world’s first commercial cellular network (Tokyo, 1979) and invented its own TV standard.",
+  quirks:[
+    "The FM dial runs 76–95 MHz — below everyone else’s. Imported cars needed “band expanders.”",
+    "No spectrum auctions, ever: carriers are chosen by beauty contest.",
+    "ISDB-T television, invented here, was adopted across most of South America.",
+    "A uniquely Japanese 1.5 GHz cellular pair, and rare 4.5 GHz 5G (n79).",
+  ],
+  patches:[
+    [525*k,1800*k,[
+      [525*k,1606.5*k,["BROADCASTING"],"MW broadcast","9 kHz raster; NHK Radio 1 Tokyo runs 300 kW on 594 kHz. Most commercial AM stations are migrating to FM before the planned late-2020s sunset."],
+      [1606.5*k,1800*k,["FIXED","MOBILE"]],
+    ]],
+    [76*M,108*M,[
+      [76*M,95*M,["BROADCASTING"],"FM broadcast (76–95)","Japan’s FM dial starts at 76 MHz, lower than anywhere else. 90–95 is “wide FM,” added so AM stations could simulcast."],
+      [95*M,108*M,["FIXED","MOBILE"],"Former TV ch 1–3","Analog VHF television until 2011; now public-safety and multimedia services."],
+    ]],
+    [470*M,960*M,[
+      [470*M,710*M,["BROADCASTING"],"ISDB-T television","Japan’s own digital-TV standard; “1seg” pocket TV rode inside every channel."],
+      [710*M,806*M,["MOBILE"],"700 MHz (n28)","The APT band plan shared across Asia-Pacific."],
+      [806*M,915*M,["MOBILE"],"800/900 cellular","NTT’s original 800 MHz — the world’s first commercial cellular network started here in 1979."],
+      [915*M,930*M,["MOBILE","Fixed"],"920 MHz LPWA","Japan’s sub-GHz IoT window: LoRa, Sigfox, and the Wi-SUN mesh reading the nation’s smart meters.","i"],
+      [930*M,960*M,["MOBILE"],"900 MHz (n8)"],
+    ]],
+    [1427*M,1525*M,[
+      [1427*M,1511*M,["MOBILE"],"1.5 GHz (n11/n21)","A cellular band pair used almost nowhere but Japan."],
+      [1511*M,1525*M,["FIXED","MOBILE"]],
+    ]],
+    [1850*M,2025*M,[
+      [1850*M,1880*M,["MOBILE"],"1.7 GHz downlink (n3)"],
+      [1880*M,1920*M,["MOBILE"],"sXGP / former PHS","PHS — the beloved 90s “Pitch” pocket phone — retired in 2023; private LTE (sXGP) inherited the band."],
+      [1920*M,1980*M,["MOBILE"],"2 GHz uplink (n1)"],
+      [1980*M,2025*M,["MOBILE-SATELLITE","MOBILE"]],
+    ]],
+    [3300*M,4200*M,[
+      [3300*M,3400*M,["RADIOLOCATION","FIXED"]],
+      [3400*M,4100*M,["MOBILE"],"3.4–4.1 GHz 5G (n77/n78)","Main sub-6 5G, assigned by ministry review — no auction."],
+      [4100*M,4200*M,["FIXED-SATELLITE (space-to-Earth)","FIXED"]],
+    ]],
+    [4400*M,4940*M,[
+      [4400*M,4500*M,["FIXED","MOBILE"]],
+      [4500*M,4600*M,["MOBILE"],"4.5 GHz 5G (n79)","NTT docomo’s extra mid-band — rare worldwide."],
+      [4600*M,4940*M,["FIXED","MOBILE"]],
+    ]],
+    [5925*M,7125*M,[
+      [5925*M,6425*M,["FIXED","FIXED-SATELLITE (Earth-to-space)","MOBILE"],"Wi-Fi 6E (lower)","Opened in 2022; the upper half remains under study.","i"],
+      [6425*M,7125*M,["FIXED","FIXED-SATELLITE (Earth-to-space)"],"Upper 6 GHz","IMT vs Wi-Fi, still undecided."],
+    ]],
+    [25.25*G,29.5*G,[
+      [25.25*G,26.5*G,["FIXED","INTER-SATELLITE"]],
+      [26.5*G,29.5*G,["MOBILE"],"28 GHz 5G (n257)","All four carriers received 400 MHz each; “local 5G” licences let factories and campuses run their own."],
+    ]],
+  ],
+  landmarks:[
+    [525*k,1606.5*k,"MW dial (NHK)",1],
+    [5900*k,15800*k,"Shortwave",0],
+    [76*M,95*M,"FM dial 76–95",1],
+    [108*M,137*M,"Airband",1],
+    [156*M,162.05*M,"Marine VHF",0],
+    [470*M,710*M,"ISDB-T TV",1],
+    [915*M,930*M,"920 MHz LPWA",1],
+    [1427*M,1511*M,"1.5 GHz (n11/21)",1],
+    [1880*M,1920*M,"sXGP (ex-PHS)",0],
+    [3400*M,4100*M,"5G n77/n78",1],
+    [4500*M,4600*M,"5G n79",1],
+    [5925*M,6425*M,"Wi-Fi 6E",1],
+    [26.5*G,29.5*G,"28 GHz n257",1],
+  ],
+},
+
+acma: {
+  name:"ACMA", flag:"🇦🇺", country:"Australia", region:"ITU Region 3",
+  full:"Australian Communications and Media Authority",
+  about:"Regulator for a continent-sized country with a coastal population — outback AM transmitters cover areas the size of European states. ACMA’s “class licences” make entire bands licence-free by rule, and its APT700 band plan was adopted across Asia.",
+  quirks:[
+    "UHF CB at 476–477 MHz: 80 licence-free channels, the outback’s party line.",
+    "Pioneered the APT700 band plan (703–803 MHz) that most of Asia now uses.",
+    "Class licences legalize whole bands at once — no paperwork, just rules.",
+    "Kept TV in VHF Band III alongside DAB+ — a squeeze most countries gave up on.",
+  ],
+  patches:[
+    [525*k,1800*k,[
+      [525*k,1606.5*k,["BROADCASTING"],"MW broadcast","9 kHz raster. Remote-area 50 kW stations serve listeners four hundred km away."],
+      [1606.5*k,1800*k,["FIXED","MOBILE"]],
+    ]],
+    [76*M,108*M,[
+      [76*M,87.5*M,["MOBILE","FIXED"],"","Land mobile mid-band."],
+      [87.5*M,108*M,["BROADCASTING"],"FM broadcast","Triple J’s national youth network threads the whole dial."],
+    ]],
+    [174*M,230*M,[
+      [174*M,230*M,["BROADCASTING"],"DTT VHF & DAB+","Australia kept television in Band III (ch 6–12) and squeezed DAB+ digital radio into channel 9A–9C gaps."],
+    ]],
+    [420*M,520*M,[
+      [420*M,430*M,["RADIOLOCATION","FIXED","MOBILE"]],
+      [430*M,450*M,["RADIOLOCATION","Amateur"],"70 cm amateur"],
+      [450*M,470*M,["MOBILE","FIXED"],"Land mobile"],
+      [470*M,476*M,["MOBILE","FIXED"]],
+      [476*M,477*M,["MOBILE"],"UHF CB","80 licence-free channels — road trains, cattle stations, and 4WD convoys all run “40-channel.” Unique to Australia and New Zealand."],
+      [477*M,520*M,["MOBILE","FIXED"],"Land mobile"],
+    ]],
+    [520*M,960*M,[
+      [520*M,694*M,["BROADCASTING"],"DTT UHF","Digital television; the 694+ “digital dividend” went to mobile."],
+      [694*M,803*M,["MOBILE"],"700 MHz (n28)","APT700 — the band plan Australia pioneered and Asia adopted."],
+      [803*M,890*M,["MOBILE"],"850/900 cellular"],
+      [890*M,915*M,["MOBILE"],"900 uplink"],
+      [915*M,928*M,["Fixed","MOBILE","Radiolocation"],"915–928 ISM","LoRa and meters in the same window as the US — unlike Europe.","i"],
+      [928*M,960*M,["MOBILE"],"900 downlink"],
+    ]],
+    [3300*M,3980*M,[
+      [3300*M,3400*M,["RADIOLOCATION","Amateur"]],
+      [3400*M,3700*M,["MOBILE"],"3.4–3.7 GHz 5G (n78)","Auctioned 2021, with area-wide licences for the bush."],
+      [3700*M,3980*M,["FIXED-SATELLITE (space-to-Earth)","MOBILE"],"3.7 GHz","Opening in stages for metro 5G and regional wireless ISPs."],
+    ]],
+    [5925*M,7125*M,[
+      [5925*M,6425*M,["FIXED","FIXED-SATELLITE (Earth-to-space)","MOBILE"],"Wi-Fi 6E (lower)","Class-licensed low-power indoor since 2022; ACMA is consulting on the upper half.","i"],
+      [6425*M,7125*M,["FIXED","FIXED-SATELLITE (Earth-to-space)"],"Upper 6 GHz"],
+    ]],
+    [24.75*G,27.5*G,[
+      [24.75*G,25.1*G,["FIXED","MOBILE"]],
+      [25.1*G,27.5*G,["MOBILE"],"26 GHz 5G (n258)","Auctioned April 2021, plus a class licence for indoor mmWave — anyone may deploy."],
+    ]],
+  ],
+  landmarks:[
+    [525*k,1606.5*k,"AM dial",1],
+    [26965*k,27405*k,"HF CB",0],
+    [87.5*M,108*M,"FM dial",1],
+    [108*M,137*M,"Airband",1],
+    [156*M,162.05*M,"Marine VHF",0],
+    [174*M,230*M,"TV & DAB+",1],
+    [476*M,477*M,"UHF CB",1],
+    [520*M,694*M,"DTT UHF",1],
+    [915*M,928*M,"LoRa 915",1],
+    [3400*M,3700*M,"5G n78",1],
+    [5925*M,6425*M,"Wi-Fi 6E",1],
+    [25.1*G,27.5*G,"26 GHz 5G",1],
+  ],
+},
+
+ised: {
+  name:"ISED", flag:"🇨🇦", country:"Canada", region:"ITU Region 2",
+  full:"Innovation, Science and Economic Development Canada",
+  about:"Canada’s spectrum branch runs one of the world’s most US-harmonized tables — phones roam the continent as one market — while auction prices per person rank among the planet’s highest.",
+  quirks:[
+    "The 2021 3500 MHz auction raised C$8.9 billion — world-leading per MHz-pop.",
+    "Matched the US: all 1200 MHz of 6 GHz unlicensed (RSS-248).",
+    "Weatheradio Canada broadcasts on the same seven 162 MHz channels as NOAA — bilingually.",
+    "No CBRS: Canada chose conventional licensing at 3.5 GHz.",
+  ],
+  patches:[
+    [162.025*M,174*M,[
+      [162.025*M,174*M,["MOBILE","FIXED"],"Weatheradio","Environment Canada broadcasts on the same seven 162 MHz channels as NOAA — in English and French."],
+    ]],
+    [3450*M,3700*M,[
+      [3450*M,3650*M,["MOBILE"],"3500 MHz flex-use (n78)","Canada’s 2021 auction raised C$8.9 B — no CBRS-style sharing, just licences."],
+      [3650*M,3700*M,["MOBILE","FIXED"]],
+    ]],
+    [3700*M,3980*M,[
+      [3700*M,3980*M,["MOBILE","FIXED-SATELLITE (space-to-Earth)"],"3800 MHz 5G","Auctioned 2023, following the US C-band clearing."],
+    ]],
+    [5925*M,7125*M,[
+      [5925*M,7125*M,["FIXED","FIXED-SATELLITE (Earth-to-space)","MOBILE"],"Wi-Fi 6E/7","Canada matched the US grant: all 1200 MHz unlicensed — low-power indoor, standard power with AFC coordination.","i"],
+    ]],
+    [25.25*G,27.5*G,[
+      [25.25*G,26.5*G,["FIXED","INTER-SATELLITE"]],
+      [26.5*G,27.5*G,["MOBILE","FIXED"],"mmWave (planned)","Consultation under way, watching both the US 28 GHz and EU 26 GHz ecosystems."],
+    ]],
+  ],
+  landmarks:[
+    [525*k,1705*k,"AM dial",1],
+    [88*M,108*M,"FM dial",1],
+    [108*M,137*M,"Airband",1],
+    [162.4*M,162.55*M,"Weatheradio",1],
+    [462.55*M,467.725*M,"FRS/GMRS",0],
+    [470*M,608*M,"TV broadcast",1],
+    [902*M,928*M,"LoRa 915",1],
+    [3450*M,3650*M,"3500 MHz 5G",1],
+    [3700*M,3980*M,"3800 MHz 5G",1],
+    [5925*M,7125*M,"Wi-Fi 6E/7",1],
+  ],
+},
+};
+
+/* ── Rulers ── */
+const ITU_BANDS = [
+  [3*k,30*k,"VLF","Very Low"],
+  [30*k,300*k,"LF","Low"],
+  [300*k,3*M,"MF","Medium"],
+  [3*M,30*M,"HF","High"],
+  [30*M,300*M,"VHF","Very High"],
+  [300*M,3*G,"UHF","Ultra High"],
+  [3*G,30*G,"SHF","Super High"],
+  [30*G,300*G,"EHF","Extremely High"],
+];
+const IEEE_BANDS = [
+  [1*G,2*G,"L"],[2*G,4*G,"S"],[4*G,8*G,"C"],[8*G,12*G,"X"],
+  [12*G,18*G,"Ku"],[18*G,27*G,"K"],[27*G,40*G,"Ka"],[40*G,75*G,"V"],
+  [75*G,110*G,"W"],[110*G,300*G,"mm"],
+];
+/* ── SPECTRA engine ── */
+const C_LIGHT = 299792458;
+const LOGMIN = Math.log10(3e3), LOGMAX = Math.log10(3e11);
+const MIN_SPAN = 5e-4;
+
+const $ = id => document.getElementById(id);
+const strip = $("strip"), mini = $("mini"), pinrow = $("pinrow"),
+      tooltip = $("tooltip"), readout = $("readout");
+const sctx = strip.getContext("2d"), mctx = mini.getContext("2d");
+
+const state = {
+  auth: "fcc",
+  bands: [], landmarks: [],
+  view: { a: LOGMIN, b: LOGMAX },
+  hover: null, sel: null, fam: null,
+  anim: null,
+};
+
+/* ── theme-reactive colors ── */
+let COLORS = {};
+function readColors(){
+  const cs = getComputedStyle(document.documentElement);
+  const v = n => cs.getPropertyValue(n).trim();
+  COLORS = {
+    surface: v("--surface"), panel: v("--panel"), ink: v("--ink"),
+    muted: v("--muted"), line: v("--line"), accent: v("--accent"),
+    hatch: v("--hatch"),
+    fam: {}
+  };
+  for (const f of FAM_ORDER) COLORS.fam[f] = v("--f-" + f);
+}
+function textOn(hex){
+  const n = parseInt(hex.slice(1), 16);
+  const yiq = ((n>>16&255)*299 + (n>>8&255)*587 + (n&255)*114) / 1000;
+  return yiq > 150 ? "rgba(20,20,24,.92)" : "rgba(255,255,255,.94)";
+}
+let patIsm = null, patQuiet = null;
+function makePatterns(){
+  const c1 = document.createElement("canvas"); c1.width = c1.height = 8;
+  const x1 = c1.getContext("2d");
+  x1.strokeStyle = COLORS.hatch; x1.lineWidth = 1.6;
+  x1.beginPath();
+  for (let i = -8; i < 16; i += 5){ x1.moveTo(i, 8); x1.lineTo(i + 8, 0); }
+  x1.stroke();
+  patIsm = sctx.createPattern(c1, "repeat");
+  const c2 = document.createElement("canvas"); c2.width = c2.height = 7;
+  const x2 = c2.getContext("2d");
+  x2.fillStyle = COLORS.hatch;
+  x2.beginPath(); x2.arc(2, 2, 1.1, 0, 7); x2.fill();
+  patQuiet = sctx.createPattern(c2, "repeat");
+}
+
+/* ── formatting ── */
+function fmtFreq(hz){
+  const u = hz >= 1e9 ? [1e9,"GHz"] : hz >= 1e6 ? [1e6,"MHz"] : hz >= 1e3 ? [1e3,"kHz"] : [1,"Hz"];
+  let v = hz / u[0];
+  let s = v >= 100 ? v.toFixed(1) : v >= 10 ? v.toFixed(2) : v.toFixed(3);
+  s = s.replace(/\.?0+$/, "");
+  return s + " " + u[1];
+}
+function fmtWave(hz){
+  let m = C_LIGHT / hz;
+  if (m >= 1000) return (m/1000).toPrecision(3).replace(/\.?0+$/,"") + " km";
+  if (m >= 1)    return m.toPrecision(3).replace(/\.?0+$/,"") + " m";
+  if (m >= .01)  return (m*100).toPrecision(3).replace(/\.?0+$/,"") + " cm";
+  if (m >= .001) return (m*1000).toPrecision(3).replace(/\.?0+$/,"") + " mm";
+  return (m*1e6).toPrecision(3).replace(/\.?0+$/,"") + " µm";
+}
+function fmtBW(hz){ return fmtFreq(hz).replace(" ", " ").replace("Hz","Hz"); }
+
+/* ── data assembly ── */
+function normBands(raw){
+  return raw.map(r => ({
+    lo: r[0], hi: r[1], svcs: r[2],
+    nick: r[3] || "", note: r[4] || "", flags: r[5] || "",
+    diff: false, fcc: null,
+  }));
+}
+function applyPatches(base, patches){
+  let out = base.slice();
+  for (const [plo, phi, repl] of patches){
+    const next = [];
+    for (const b of out){
+      if (b.hi <= plo || b.lo >= phi){ next.push(b); continue; }
+      if (b.lo < plo) next.push(Object.assign({}, b, { hi: plo }));
+      if (b.hi > phi) next.push(Object.assign({}, b, { lo: phi }));
+    }
+    for (const r of normBands(repl)) next.push(r);
+    out = next.sort((a, b2) => a.lo - b2.lo);
+  }
+  return out;
+}
+let FCC_BANDS = null;
+function findBand(bands, f){
+  let lo = 0, hi = bands.length - 1;
+  while (lo <= hi){
+    const m = (lo + hi) >> 1, b = bands[m];
+    if (f < b.lo) hi = m - 1;
+    else if (f >= b.hi) lo = m + 1;
+    else return b;
+  }
+  return null;
+}
+function svcSig(b){ return b.svcs.join("|"); }
+function build(key){
+  state.auth = key;
+  const A = AUTH[key];
+  if (!FCC_BANDS) FCC_BANDS = normBands(BASE);
+  state.bands = key === "fcc" ? FCC_BANDS : applyPatches(FCC_BANDS, A.patches);
+  if (key !== "fcc"){
+    for (const b of state.bands){
+      const mid = Math.sqrt(b.lo * b.hi);
+      const fb = findBand(FCC_BANDS, mid);
+      b.fcc = fb;
+      b.diff = !fb || svcSig(b) !== svcSig(fb) || (b.nick || "") !== (fb.nick || "");
+    }
+  }
+  state.landmarks = LM_WORLD.concat(A.landmarks)
+    .map(l => ({ lo: l[0], hi: l[1], label: l[2], tour: !!l[3] }))
+    .sort((a, b) => (a.lo + a.hi) - (b.lo + b.hi));
+  state.sel = null; state.hover = null;
+  $("regchip").textContent = A.flag + " " + A.region;
+  $("statline").textContent = state.bands.length + " bands · " + A.country;
+  buildChips(); buildLegend(); showAuthCard();
+  $("diffkey").style.display = key === "fcc" ? "none" : "flex";
+  renderMini(); requestRender();
+}
+
+/* ── geometry ── */
+let W = 0, H = 0, DPR = 1;
+const ROW_ITU = 24, ROW_IEEE = 18, ROW_AXIS = 30, ROW_WAVE = 18, NICK_H = 20;
+function stripTop(){ return ROW_ITU + ROW_IEEE; }
+function stripH(){ return H - stripTop() - ROW_AXIS - ROW_WAVE; }
+function X(logf){ return (logf - state.view.a) / (state.view.b - state.view.a) * W; }
+function Xf(f){ return X(Math.log10(f)); }
+function fAt(x){ return Math.pow(10, state.view.a + x / W * (state.view.b - state.view.a)); }
+
+function resize(){
+  DPR = window.devicePixelRatio || 1;
+  W = strip.clientWidth;
+  H = Math.max(300, Math.min(520, Math.round(window.innerHeight * .48)));
+  strip.style.height = H + "px";
+  strip.width = Math.round(W * DPR); strip.height = Math.round(H * DPR);
+  sctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  mini.width = Math.round(mini.clientWidth * DPR); mini.height = Math.round(44 * DPR);
+  mctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  renderMini(); requestRender();
+}
+
+/* ── ticks ── */
+function niceTicks(){
+  const { a, b } = state.view, span = b - a, out = [];
+  if (span > .8){
+    const mants = span > 4 ? [1] : span > 1.6 ? [1,2,5] : [1,1.5,2,3,4,5,6,7,8,9];
+    for (let d = Math.floor(a) - 1; d <= Math.ceil(b); d++)
+      for (const m of mants){
+        const lg = d + Math.log10(m);
+        if (lg >= a - 1e-9 && lg <= b + 1e-9)
+          out.push({ f: Math.pow(10, lg), major: m === 1 });
+      }
+  } else {
+    const f0 = Math.pow(10, a), f1 = Math.pow(10, b), range = f1 - f0;
+    const raw = range / 7, p = Math.pow(10, Math.floor(Math.log10(raw)));
+    const step = raw / p >= 5 ? 5*p : raw / p >= 2 ? 2*p : p;
+    for (let f = Math.ceil(f0 / step) * step; f <= f1; f += step)
+      out.push({ f, major: true });
+  }
+  return out;
+}
+
+/* ── main render ── */
+let rafPending = false;
+function requestRender(){
+  if (rafPending) return;
+  rafPending = true;
+  requestAnimationFrame(() => { rafPending = false; render(); });
+}
+function render(){
+  const { a, b } = state.view;
+  sctx.clearRect(0, 0, W, H);
+  const sT = stripTop(), sH = stripH();
+
+  /* ITU + IEEE rails */
+  sctx.font = "700 11px 'Bahnschrift','Avenir Next Condensed','Arial Narrow',system-ui";
+  for (const [lo, hi, code, longName] of ITU_BANDS){
+    const x0 = Math.max(0, Xf(lo)), x1 = Math.min(W, Xf(hi));
+    if (x1 <= 0 || x0 >= W) continue;
+    sctx.strokeStyle = COLORS.line;
+    sctx.strokeRect(x0 + .5, .5, x1 - x0, ROW_ITU - 1);
+    sctx.fillStyle = COLORS.muted;
+    const w = x1 - x0;
+    if (w > 30){
+      const label = w > 220 ? code + " · " + longName + " Frequency" : code;
+      sctx.textAlign = "center"; sctx.textBaseline = "middle";
+      sctx.fillText(label, (x0 + x1) / 2, ROW_ITU / 2 + 1);
+    }
+  }
+  sctx.font = "600 10px ui-monospace,Menlo,Consolas,monospace";
+  for (const [lo, hi, code] of IEEE_BANDS){
+    const x0 = Math.max(0, Xf(lo)), x1 = Math.min(W, Xf(hi));
+    if (x1 <= 0 || x0 >= W || x1 - x0 < 14) continue;
+    sctx.strokeStyle = COLORS.line;
+    sctx.strokeRect(x0 + .5, ROW_ITU + .5, x1 - x0, ROW_IEEE - 1);
+    sctx.fillStyle = COLORS.muted;
+    sctx.textAlign = "center"; sctx.textBaseline = "middle";
+    sctx.fillText(code, (x0 + x1) / 2, ROW_ITU + ROW_IEEE / 2 + 1);
+  }
+
+  /* bands */
+  const fLo = Math.pow(10, a), fHi = Math.pow(10, b);
+  for (const band of state.bands){
+    if (band.hi < fLo || band.lo > fHi) continue;
+    let x0 = Xf(band.lo), x1 = Xf(band.hi);
+    if (x1 - x0 < .8) x1 = x0 + .8;
+    const bw = x1 - x0;
+    const vx0 = Math.max(x0, 0), vx1 = Math.min(x1, W), vw = vx1 - vx0;
+    const dim = state.fam && !band.svcs.some(s => famOf(s) === state.fam);
+    const n = band.svcs.length;
+    const hasNick = band.nick && vw > 70;
+    const topY = sT + (hasNick ? NICK_H : 0);
+    const segH = (sH - (hasNick ? NICK_H : 0)) / n;
+
+    sctx.globalAlpha = dim ? .13 : 1;
+    for (let i = 0; i < n; i++){
+      const fam = famOf(band.svcs[i]);
+      sctx.fillStyle = COLORS.fam[fam];
+      const y = topY + i * segH;
+      sctx.fillRect(x0, y, bw, segH - (i < n - 1 ? 1 : 0));
+      /* segment label */
+      if (!dim && segH > 13){
+        const name = band.svcs[i];
+        sctx.fillStyle = textOn(COLORS.fam[fam]);
+        if (vw > 84){
+          sctx.font = (isPrimary(name) ? "600 " : "400 italic ") + "11px system-ui";
+          sctx.textAlign = "left"; sctx.textBaseline = "middle";
+          const maxChars = Math.floor((vw - 12) / 6.2);
+          sctx.fillText(name.length > maxChars ? name.slice(0, Math.max(0, maxChars - 1)) + "…" : name, vx0 + 6, y + segH / 2);
+        } else if (vw > 15 && segH > 46){
+          sctx.save();
+          sctx.translate(vx0 + vw / 2, y + segH - 5);
+          sctx.rotate(-Math.PI / 2);
+          sctx.font = (isPrimary(name) ? "600 " : "400 ") + "10px system-ui";
+          sctx.textAlign = "left"; sctx.textBaseline = "middle";
+          const maxC = Math.floor((segH - 10) / 5.6);
+          sctx.fillText(name.length > maxC ? name.slice(0, Math.max(0, maxC - 1)) + "…" : name, 0, 0);
+          sctx.restore();
+        }
+      }
+    }
+    /* nick strip */
+    if (hasNick && !dim){
+      sctx.fillStyle = COLORS.surface;
+      sctx.fillRect(x0, sT, bw, NICK_H);
+      sctx.fillStyle = COLORS.ink;
+      sctx.font = "600 11.5px 'Bahnschrift','Avenir Next Condensed','Arial Narrow',system-ui";
+      sctx.textAlign = "center"; sctx.textBaseline = "middle";
+      const t = band.nick, maxC = Math.floor(vw / 6);
+      sctx.fillText(t.length > maxC ? t.slice(0, maxC - 1) + "…" : t, vx0 + vw / 2, sT + NICK_H / 2);
+    }
+    /* overlays */
+    if (!dim && band.flags.includes("i") && patIsm){
+      sctx.fillStyle = patIsm; sctx.fillRect(x0, topY, bw, sH - (hasNick ? NICK_H : 0));
+    }
+    if (!dim && band.flags.includes("q") && patQuiet){
+      sctx.fillStyle = patQuiet; sctx.fillRect(x0, topY, bw, sH - (hasNick ? NICK_H : 0));
+    }
+    sctx.globalAlpha = 1;
+    /* band divider */
+    sctx.strokeStyle = COLORS.surface; sctx.lineWidth = 1;
+    sctx.beginPath(); sctx.moveTo(x1 + .5, sT); sctx.lineTo(x1 + .5, sT + sH); sctx.stroke();
+    /* differs-from-FCC dashes */
+    if (band.diff && bw > 3){
+      sctx.strokeStyle = COLORS.accent; sctx.lineWidth = 2;
+      sctx.setLineDash([5, 4]);
+      sctx.beginPath(); sctx.moveTo(x0 + 1, sT + sH - 1.5); sctx.lineTo(x1 - 1, sT + sH - 1.5); sctx.stroke();
+      sctx.setLineDash([]);
+    }
+  }
+
+  /* selection + hover outline */
+  for (const [bnd, wdt] of [[state.sel, 2.5], [state.hover && state.hover.band, 1.5]]){
+    if (!bnd) continue;
+    const x0 = Xf(bnd.lo), x1 = Math.max(Xf(bnd.hi), x0 + 1);
+    sctx.strokeStyle = COLORS.accent; sctx.lineWidth = wdt;
+    sctx.strokeRect(x0 + wdt/2, sT + wdt/2, x1 - x0 - wdt, sH - wdt);
+  }
+
+  /* axis */
+  const axY = sT + sH;
+  sctx.strokeStyle = COLORS.ink; sctx.lineWidth = 1;
+  sctx.beginPath(); sctx.moveTo(0, axY + .5); sctx.lineTo(W, axY + .5); sctx.stroke();
+  sctx.font = "10.5px ui-monospace,Menlo,Consolas,monospace";
+  let lastEnd = -1e9;
+  for (const t of niceTicks()){
+    const x = Xf(t.f);
+    if (x < -2 || x > W + 2) continue;
+    sctx.strokeStyle = COLORS.muted;
+    sctx.beginPath(); sctx.moveTo(x + .5, axY); sctx.lineTo(x + .5, axY + (t.major ? 7 : 4)); sctx.stroke();
+    if (t.major){
+      const label = fmtFreq(t.f);
+      const wpx = sctx.measureText(label).width;
+      if (x - wpx / 2 > lastEnd + 8){
+        sctx.fillStyle = COLORS.ink;
+        sctx.textAlign = "center"; sctx.textBaseline = "top";
+        sctx.fillText(label, x, axY + 9);
+        lastEnd = x + wpx / 2;
+      }
+    }
+  }
+  /* wavelength ruler */
+  sctx.font = "10px ui-monospace,Menlo,Consolas,monospace";
+  sctx.fillStyle = COLORS.muted;
+  sctx.textAlign = "center"; sctx.textBaseline = "top";
+  const wlY = axY + ROW_AXIS;
+  let lastW = -1e9;
+  for (let e = 6; e >= -4; e--){
+    const lam = Math.pow(10, e), f = C_LIGHT / lam;
+    const x = Xf(f);
+    if (x < 16 || x > W - 16) continue;
+    const lbl = "λ " + (e >= 3 ? Math.pow(10, e-3) + " km" : e >= 0 ? lam + " m" : e >= -2 ? Math.pow(10, e+2) + " cm" : Math.pow(10, e+3) + " mm");
+    const wpx = sctx.measureText(lbl).width;
+    if (x - wpx/2 > lastW + 10){
+      sctx.strokeStyle = COLORS.line;
+      sctx.beginPath(); sctx.moveTo(x + .5, wlY); sctx.lineTo(x + .5, wlY + 4); sctx.stroke();
+      sctx.fillText(lbl, x, wlY + 4);
+      lastW = x + wpx/2;
+    }
+  }
+
+  /* crosshair */
+  if (state.hover){
+    const x = state.hover.x;
+    sctx.strokeStyle = COLORS.accent; sctx.lineWidth = 1;
+    sctx.setLineDash([3, 3]);
+    sctx.beginPath(); sctx.moveTo(x + .5, sT); sctx.lineTo(x + .5, sT + sH); sctx.stroke();
+    sctx.setLineDash([]);
+  }
+  layoutPins();
+}
+
+/* ── landmark pins ── */
+function layoutPins(){
+  pinrow.textContent = "";
+  const placed = [];
+  for (const lm of state.landmarks){
+    const cx = X((Math.log10(lm.lo) + Math.log10(lm.hi)) / 2);
+    if (cx < 8 || cx > W - 8) continue;
+    const wpx = lm.label.length * 6.4 + 20;
+    if (placed.some(([p0, p1]) => cx - wpx/2 < p1 && cx + wpx/2 > p0)) continue;
+    placed.push([cx - wpx/2, cx + wpx/2]);
+    const el = document.createElement("button");
+    el.className = "pin"; el.textContent = lm.label;
+    el.style.left = cx + "px";
+    el.title = fmtFreq(lm.lo) + (lm.hi > lm.lo ? " – " + fmtFreq(lm.hi) : "");
+    el.addEventListener("click", () => flyTo(lm.lo, lm.hi));
+    pinrow.appendChild(el);
+    if (placed.length > 40) break;
+  }
+}
+
+/* ── minimap ── */
+function renderMini(){
+  const mw = mini.clientWidth, mh = 44;
+  mctx.clearRect(0, 0, mw, mh);
+  const mx = f => (Math.log10(f) - LOGMIN) / (LOGMAX - LOGMIN) * mw;
+  for (const b of state.bands){
+    const x0 = mx(b.lo), x1 = Math.max(mx(b.hi), x0 + .6);
+    mctx.fillStyle = COLORS.fam[famOf(b.svcs[0])];
+    mctx.globalAlpha = .85;
+    mctx.fillRect(x0, 6, x1 - x0, mh - 12);
+  }
+  mctx.globalAlpha = 1;
+  mctx.strokeStyle = COLORS.line;
+  for (let d = 4; d <= 11; d++){
+    const x = (d - LOGMIN) / (LOGMAX - LOGMIN) * mw;
+    mctx.beginPath(); mctx.moveTo(x + .5, 2); mctx.lineTo(x + .5, mh - 2); mctx.stroke();
+  }
+  const vx0 = (state.view.a - LOGMIN) / (LOGMAX - LOGMIN) * mw;
+  const vx1 = (state.view.b - LOGMIN) / (LOGMAX - LOGMIN) * mw;
+  mctx.fillStyle = COLORS.accent; mctx.globalAlpha = .15;
+  mctx.fillRect(vx0, 0, Math.max(vx1 - vx0, 3), mh);
+  mctx.globalAlpha = 1;
+  mctx.strokeStyle = COLORS.accent; mctx.lineWidth = 1.5;
+  mctx.strokeRect(vx0 + .75, .75, Math.max(vx1 - vx0, 3) - 1.5, mh - 1.5);
+}
+
+/* ── view control ── */
+function clampView(a, b){
+  let span = Math.max(MIN_SPAN, Math.min(b - a, LOGMAX - LOGMIN));
+  if (a < LOGMIN){ a = LOGMIN; }
+  if (a + span > LOGMAX){ a = LOGMAX - span; }
+  return { a, b: a + span };
+}
+function setView(a, b){
+  state.view = clampView(a, b);
+  renderMini(); requestRender();
+}
+function zoomAt(x, factor){
+  const { a, b } = state.view;
+  const pivot = a + x / W * (b - a);
+  const na = pivot + (a - pivot) * factor;
+  const nb = pivot + (b - pivot) * factor;
+  setView(na, nb);
+}
+function flyTo(lo, hi){
+  let la = Math.log10(lo), lb = Math.log10(Math.max(hi, lo));
+  if (lb - la < .01){ const c = (la + lb) / 2; la = c - .06; lb = c + .06; }
+  const pad = (lb - la) * .18;
+  const target = clampView(la - pad, lb + pad + ((lb - la) < MIN_SPAN ? MIN_SPAN : 0));
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches){
+    setView(target.a, target.b); return;
+  }
+  const from = { ...state.view }, t0 = performance.now(), dur = 550;
+  if (state.anim) cancelAnimationFrame(state.anim);
+  const step = now => {
+    const t = Math.min(1, (now - t0) / dur);
+    const e = t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3) / 2;
+    state.view = {
+      a: from.a + (target.a - from.a) * e,
+      b: from.b + (target.b - from.b) * e,
+    };
+    renderMini(); render();
+    if (t < 1) state.anim = requestAnimationFrame(step);
+    else state.anim = null;
+  };
+  state.anim = requestAnimationFrame(step);
+}
+
+/* ── pointer interaction ── */
+const pointers = new Map();
+let dragStart = null, moved = false, pinch0 = null;
+strip.addEventListener("pointerdown", e => {
+  strip.setPointerCapture(e.pointerId);
+  pointers.set(e.pointerId, { x: e.offsetX, y: e.offsetY });
+  moved = false;
+  if (pointers.size === 1) dragStart = { x: e.offsetX, view: { ...state.view } };
+  else if (pointers.size === 2){
+    const [p1, p2] = [...pointers.values()];
+    pinch0 = { d: Math.abs(p1.x - p2.x) || 1, cx: (p1.x + p2.x) / 2, view: { ...state.view } };
+    dragStart = null;
+  }
+});
+strip.addEventListener("pointermove", e => {
+  if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.offsetX, y: e.offsetY });
+  if (pointers.size === 2 && pinch0){
+    const [p1, p2] = [...pointers.values()];
+    const d = Math.abs(p1.x - p2.x) || 1;
+    const scale = pinch0.d / d;
+    const span0 = pinch0.view.b - pinch0.view.a;
+    const pivot = pinch0.view.a + pinch0.cx / W * span0;
+    const cx = (p1.x + p2.x) / 2;
+    let na = pivot - cx / W * span0 * scale;
+    setView(na, na + span0 * scale);
+    moved = true;
+    return;
+  }
+  if (dragStart && pointers.size === 1){
+    const dx = e.offsetX - dragStart.x;
+    if (Math.abs(dx) > 3) moved = true;
+    const span = dragStart.view.b - dragStart.view.a;
+    const shift = -dx / W * span;
+    setView(dragStart.view.a + shift, dragStart.view.b + shift);
+  }
+  updateHover(e.offsetX, e.offsetY);
+});
+function endPointer(e){
+  pointers.delete(e.pointerId);
+  if (pointers.size < 2) pinch0 = null;
+  if (pointers.size === 0){
+    if (!moved && e.type === "pointerup"){
+      const b = findBand(state.bands, fAt(e.offsetX));
+      selectBand(b === state.sel ? null : b);
+    }
+    dragStart = null;
+  }
+}
+strip.addEventListener("pointerup", endPointer);
+strip.addEventListener("pointercancel", endPointer);
+strip.addEventListener("pointerleave", () => {
+  if (pointers.size === 0){ state.hover = null; tooltip.style.display = "none"; readout.style.display = "none"; requestRender(); }
+});
+strip.addEventListener("wheel", e => {
+  e.preventDefault();
+  zoomAt(e.offsetX, Math.exp(e.deltaY * .0016));
+  updateHover(e.offsetX, e.offsetY);
+}, { passive: false });
+strip.addEventListener("dblclick", e => {
+  const f = fAt(e.offsetX);
+  const b = findBand(state.bands, f);
+  if (b && e.shiftKey === false) flyTo(b.lo, b.hi);
+  else zoomAt(e.offsetX, e.shiftKey ? 3 : 1/3);
+});
+
+function updateHover(x, y){
+  const f = fAt(x);
+  const band = findBand(state.bands, f);
+  state.hover = { x, f, band };
+  readout.style.display = "block";
+  readout.innerHTML = "<b>" + fmtFreq(f) + "</b> · λ " + fmtWave(f);
+  if (band){
+    tooltip.style.display = "block";
+    let html = "<div class='tt-t'>" + (band.nick || fmtFreq(band.lo) + " – " + fmtFreq(band.hi)) + "</div>";
+    html += "<div class='tt-f'>" + fmtFreq(band.lo) + " – " + fmtFreq(band.hi) + " · BW " + fmtFreq(band.hi - band.lo) + "</div>";
+    for (const s of band.svcs){
+      html += "<div class='tt-s'><span class='sw' style='background:" + COLORS.fam[famOf(s)] + "'></span>" + s + "</div>";
+    }
+    if (band.diff) html += "<div class='tt-more'>≠ FCC table — click to compare</div>";
+    else if (band.note) html += "<div class='tt-more'>click for the story</div>";
+    tooltip.innerHTML = html;
+    const tw = tooltip.offsetWidth, sw = strip.clientWidth;
+    let tx = x + 16; if (tx + tw > sw - 8) tx = x - tw - 16;
+    tooltip.style.left = Math.max(4, tx) + "px";
+    tooltip.style.top = Math.min(y + 46, H - tooltip.offsetHeight + 20) + "px";
+  } else tooltip.style.display = "none";
+  requestRender();
+}
+
+/* keyboard */
+strip.addEventListener("keydown", e => {
+  const span = state.view.b - state.view.a;
+  if (e.key === "ArrowLeft"){ setView(state.view.a - span*.12, state.view.b - span*.12); }
+  else if (e.key === "ArrowRight"){ setView(state.view.a + span*.12, state.view.b + span*.12); }
+  else if (e.key === "+" || e.key === "="){ zoomAt(W/2, .7); }
+  else if (e.key === "-" || e.key === "_"){ zoomAt(W/2, 1.4); }
+  else if (e.key === "0" || e.key === "Home"){ setView(LOGMIN, LOGMAX); }
+  else return;
+  e.preventDefault();
+});
+$("zin").addEventListener("click", () => zoomAt(W/2, .55));
+$("zout").addEventListener("click", () => zoomAt(W/2, 1.8));
+$("zfit").addEventListener("click", () => flyTo(3e3, 3e11));
+
+/* minimap interaction */
+let miniDrag = false;
+function miniGo(e){
+  const r = mini.getBoundingClientRect();
+  const frac = (e.clientX - r.left) / r.width;
+  const lg = LOGMIN + frac * (LOGMAX - LOGMIN);
+  const span = state.view.b - state.view.a;
+  setView(lg - span/2, lg + span/2);
+}
+mini.addEventListener("pointerdown", e => { miniDrag = true; mini.setPointerCapture(e.pointerId); miniGo(e); });
+mini.addEventListener("pointermove", e => { if (miniDrag) miniGo(e); });
+mini.addEventListener("pointerup", () => miniDrag = false);
+mini.addEventListener("pointercancel", () => miniDrag = false);
+
+/* ── selection & detail panel ── */
+function selectBand(b){
+  state.sel = b;
+  if (b) showBandCard(b); else showAuthCard();
+  requestRender();
+}
+function psBadge(s){ return isPrimary(s) ? "PRIMARY" : "secondary"; }
+function showBandCard(b){
+  const d = $("detail");
+  const itu = ITU_BANDS.find(x => b.lo >= x[0] && b.lo < x[1]);
+  const ieee = IEEE_BANDS.find(x => b.lo >= x[0] && b.lo < x[1]);
+  let h = "<h2>Band detail</h2>";
+  h += "<div class='d-nick'>" + (b.nick || "Allocation") + "</div>";
+  h += "<div class='d-range'>" + fmtFreq(b.lo) + " – " + fmtFreq(b.hi) +
+       " · BW " + fmtFreq(b.hi - b.lo) + " · λ " + fmtWave(b.hi) + " – " + fmtWave(b.lo) + "</div>";
+  h += "<div class='d-meta'>";
+  if (itu) h += "<span class='mchip'>" + itu[2] + " — " + itu[3] + " Frequency</span>";
+  if (ieee) h += "<span class='mchip'>IEEE " + ieee[2] + "-band</span>";
+  if (b.flags.includes("i")) h += "<span class='mchip warn'>Unlicensed / ISM</span>";
+  if (b.flags.includes("q")) h += "<span class='mchip warn'>Passive quiet band</span>";
+  if (b.diff) h += "<span class='mchip warn'>≠ FCC</span>";
+  h += "</div><table>";
+  for (const s of b.svcs){
+    h += "<tr><td><span class='sw' style='background:" + COLORS.fam[famOf(s)] + "'></span>" + s +
+         "</td><td class='ps'>" + psBadge(s) + "</td></tr>";
+  }
+  h += "</table>";
+  if (b.note) h += "<p class='d-note'>" + b.note + "</p>";
+  if (b.diff && b.fcc){
+    h += "<div class='d-fcc'><b>FCC table here:</b> " + (b.fcc.nick ? b.fcc.nick + " — " : "") +
+         b.fcc.svcs.join(", ") + "</div>";
+  }
+  h += "<div class='navbtns'><button id='bprev'>← Previous band</button><button id='bzoom'>Zoom to band</button><button id='bnext'>Next band →</button></div>";
+  d.innerHTML = h;
+  const idx = state.bands.indexOf(b);
+  $("bprev").addEventListener("click", () => { const nb = state.bands[idx-1]; if (nb){ selectBand(nb); flyTo(nb.lo, nb.hi); } });
+  $("bnext").addEventListener("click", () => { const nb = state.bands[idx+1]; if (nb){ selectBand(nb); flyTo(nb.lo, nb.hi); } });
+  $("bzoom").addEventListener("click", () => flyTo(b.lo, b.hi));
+}
+function showAuthCard(){
+  const A = AUTH[state.auth], d = $("detail");
+  let h = "<h2>Regulator</h2>";
+  h += "<div class='d-nick'>" + A.flag + " " + A.full + "</div>";
+  h += "<div class='d-range'>" + A.country + " · " + A.region + " · " + state.bands.length + " bands in this model</div>";
+  h += "<p class='d-note'>" + A.about + "</p>";
+  h += "<ul class='quirks'>" + A.quirks.map(q => "<li>" + q + "</li>").join("") + "</ul>";
+  h += "<p class='d-note' style='color:var(--muted);font-size:13px;margin-top:10px'>Click any band on the chart for its allocation card, or click a service in the legend to trace it across the spectrum.</p>";
+  d.innerHTML = h;
+}
+
+/* ── legend ── */
+function buildLegend(){
+  const wrap = $("fams");
+  wrap.textContent = "";
+  const counts = {};
+  for (const b of state.bands)
+    for (const s of b.svcs){
+      const f = famOf(s);
+      counts[f] = (counts[f] || 0);
+    }
+  for (const b of state.bands){
+    const seen = new Set(b.svcs.map(famOf));
+    for (const f of seen) counts[f] = (counts[f] || 0) + 1;
+  }
+  for (const f of FAM_ORDER){
+    const btn = document.createElement("button");
+    btn.className = "fam";
+    btn.setAttribute("aria-pressed", state.fam === f ? "true" : "false");
+    btn.innerHTML = "<span class='sw' style='background:var(--f-" + f + ")'></span>" +
+      FAMS[f].name + "<span class='n'>" + (counts[f] || 0) + "</span>";
+    btn.addEventListener("click", () => {
+      state.fam = state.fam === f ? null : f;
+      buildLegend(); requestRender();
+      $("clearfam").classList.toggle("on", !!state.fam);
+    });
+    wrap.appendChild(btn);
+  }
+}
+$("clearfam").addEventListener("click", () => {
+  state.fam = null; buildLegend(); requestRender();
+  $("clearfam").classList.remove("on");
+});
+
+/* ── chips ── */
+function buildChips(){
+  const c = $("chips");
+  c.querySelectorAll(".chip").forEach(x => x.remove());
+  for (const lm of state.landmarks.filter(l => l.tour)){
+    const b = document.createElement("button");
+    b.className = "chip"; b.textContent = lm.label;
+    b.addEventListener("click", () => flyTo(lm.lo, lm.hi));
+    c.appendChild(b);
+  }
+}
+
+/* ── search ── */
+const searchEl = $("search"), resEl = $("results");
+function parseFreq(q){
+  const m = q.trim().toLowerCase().match(/^([\d.,]+)\s*(hz|khz|mhz|ghz|k|m|g)?\s*$/);
+  if (!m) return null;
+  const v = parseFloat(m[1].replace(/,/g, ""));
+  if (!isFinite(v) || v <= 0) return null;
+  const mult = { hz:1, khz:1e3, k:1e3, mhz:1e6, m:1e6, ghz:1e9, g:1e9 }[m[2] || "mhz"];
+  const f = v * mult;
+  return (f >= 3e3 && f <= 3e11) ? f : null;
+}
+function doSearch(q){
+  resEl.textContent = "";
+  if (!q.trim()){ resEl.style.display = "none"; return; }
+  const items = [];
+  const f = parseFreq(q);
+  if (f !== null){
+    const b = findBand(state.bands, f);
+    items.push({ label: "Go to " + fmtFreq(f) + (b && b.nick ? " — " + b.nick : ""), f0: f, f1: f, band: b });
+  }
+  const ql = q.toLowerCase();
+  for (const lm of state.landmarks)
+    if (lm.label.toLowerCase().includes(ql))
+      items.push({ label: lm.label, f0: lm.lo, f1: lm.hi });
+  for (const b of state.bands){
+    const hay = (b.nick + " " + b.note + " " + b.svcs.join(" ")).toLowerCase();
+    if (hay.includes(ql))
+      items.push({ label: (b.nick || b.svcs[0]), f0: b.lo, f1: b.hi, band: b });
+    if (items.length > 14) break;
+  }
+  const seen = new Set();
+  let shown = 0;
+  for (const it of items){
+    const key = it.label + it.f0;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const btn = document.createElement("button");
+    btn.setAttribute("role", "option");
+    btn.innerHTML = "<span>" + it.label + "</span><span class='rf'>" +
+      fmtFreq(it.f0) + (it.f1 > it.f0 ? "–" + fmtFreq(it.f1) : "") + "</span>";
+    btn.addEventListener("click", () => {
+      flyTo(it.f0, it.f1);
+      if (it.band) selectBand(it.band);
+      resEl.style.display = "none"; searchEl.value = "";
+    });
+    resEl.appendChild(btn);
+    if (++shown >= 8) break;
+  }
+  resEl.style.display = shown ? "block" : "none";
+}
+searchEl.addEventListener("input", () => doSearch(searchEl.value));
+searchEl.addEventListener("keydown", e => {
+  if (e.key === "Enter"){
+    const first = resEl.querySelector("button");
+    if (first) first.click();
+  } else if (e.key === "Escape"){ resEl.style.display = "none"; }
+});
+document.addEventListener("click", e => {
+  if (!e.target.closest(".searchbox")) resEl.style.display = "none";
+});
+
+/* ── authority select ── */
+const sel = $("auth");
+for (const key of Object.keys(AUTH)){
+  const o = document.createElement("option");
+  o.value = key;
+  o.textContent = AUTH[key].flag + " " + AUTH[key].name + " — " + AUTH[key].country;
+  sel.appendChild(o);
+}
+sel.value = "fcc";
+sel.addEventListener("change", () => build(sel.value));
+
+/* ── theme reactivity ── */
+function onTheme(){
+  readColors(); makePatterns(); renderMini(); requestRender();
+  if (state.sel) showBandCard(state.sel);
+}
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", onTheme);
+new MutationObserver(onTheme).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+/* ── boot ── */
+readColors(); makePatterns();
+build("fcc");
+resize();
+window.addEventListener("resize", resize);
+new ResizeObserver(() => { if (strip.clientWidth !== W) resize(); }).observe(strip);
+</script>
