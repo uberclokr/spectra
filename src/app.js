@@ -786,6 +786,47 @@ for (const key of Object.keys(AUTH)){
 sel.value = "fcc";
 sel.addEventListener("change", () => build(sel.value));
 
+/* ── wordmark waterline ──
+   Redraws the --wave mask from the --wave-line / --wave-amp / --wave-cycles
+   tokens in the stylesheet, which are the only place those numbers live. */
+function buildWave(){
+  const root = document.documentElement;
+  const cs = getComputedStyle(root);
+  const num = (n, d) => { const v = parseFloat(cs.getPropertyValue(n)); return isFinite(v) ? v : d; };
+  const line = num("--wave-line", 13), amp = num("--wave-amp", 7);
+  const halves = Math.max(1, Math.round(Math.max(.5, num("--wave-cycles", 2)) * 2));
+  const seg = 100 / halves, r = n => Math.round(n * 100) / 100;
+  /* one quadratic hump, then reflect it across the rest of the word */
+  let d = "M0," + r(line) + " Q" + r(seg / 2) + "," + r(line - amp) + " " + r(seg) + "," + r(line);
+  for (let i = 1; i < halves; i++) d += " T" + r(seg * (i + 1)) + "," + r(line);
+  d += " L100,40 L0,40 Z";
+  root.style.setProperty("--wave",
+    "url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" " +
+    "viewBox=\"0 0 100 40\" preserveAspectRatio=\"none\"><path d=\"" + d + "\" fill=\"black\"/></svg>')");
+}
+
+/* ── theme: auto → light → dark ── */
+const THEMES = ["auto", "light", "dark"];
+const THEME_FACE = { auto: "◐ Auto", light: "☀ Light", dark: "☾ Dark" };
+let themeMode = "auto";
+function applyTheme(mode, persist){
+  themeMode = THEMES.includes(mode) ? mode : "auto";
+  if (themeMode === "auto") delete document.documentElement.dataset.theme;
+  else document.documentElement.dataset.theme = themeMode;
+  const b = $("themebtn");
+  if (b){
+    b.textContent = THEME_FACE[themeMode];
+    const next = THEMES[(THEMES.indexOf(themeMode) + 1) % THEMES.length];
+    b.title = "Theme: " + THEME_FACE[themeMode].slice(2) + " — click for " + THEME_FACE[next].slice(2);
+    b.setAttribute("aria-label", b.title);
+  }
+  if (persist){ try { localStorage.setItem("spectra-theme", themeMode); } catch (e){ /* private mode */ } }
+  onTheme();
+}
+$("themebtn").addEventListener("click", () => {
+  applyTheme(THEMES[(THEMES.indexOf(themeMode) + 1) % THEMES.length], true);
+});
+
 /* ── theme reactivity ── */
 function onTheme(){
   readColors(); makePatterns(); renderMini(); requestRender();
@@ -811,5 +852,12 @@ resize();
   }
 }
 booting = false;
+buildWave();
+{
+  let saved = null;
+  try { saved = localStorage.getItem("spectra-theme"); } catch (e){ /* private mode */ }
+  /* an artifact host may already have stamped a theme — don't fight it */
+  applyTheme(saved || document.documentElement.dataset.theme || "auto", false);
+}
 window.addEventListener("resize", resize);
 new ResizeObserver(() => { if (strip.clientWidth !== W) resize(); }).observe(strip);

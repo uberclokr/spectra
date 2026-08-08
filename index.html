@@ -36,9 +36,27 @@
   --hatch:rgba(42,44,48,.22); --shadow:0 1px 3px rgba(40,36,20,.08),0 8px 24px rgba(40,36,20,.07);
   --sea:#12518F;
 }
-/* The waterline: two cycles of a sine carrier, everything below it filled.
-   preserveAspectRatio="none" lets it stretch to whatever the wordmark measures. */
-:root{--wave:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40" preserveAspectRatio="none"><path d="M0,13 Q12.5,6 25,13 T50,13 T75,13 T100,13 L100,40 L0,40 Z" fill="black"/></svg>')}
+/* ── Wordmark waterline ──────────────────────────────────────────────────────
+   The carrier wave that fills the lower half of the logo. These three numbers
+   are the whole control surface — edit them here and nowhere else; buildWave()
+   redraws the mask path from them at load.
+
+   Coordinates are in units of a 40-tall box that stretches to the wordmark:
+     --wave-line    waterline height. SMALLER sits HIGHER up the letters.
+                    13 is the midpoint of the caps — not 20, because
+                    line-height reserves descender space all-caps never uses.
+     --wave-amp     swell height above and below the waterline. Under ~4 reads
+                    as ripples; over ~9 starts clipping the letter tops.
+     --wave-cycles  full sine cycles across the word. 2 keeps it periodic like
+                    a carrier; 1.5 breaks the symmetry and reads more like sea.
+   --wave itself is the generated mask. The literal below is the fallback that
+   matches the defaults, so the mark still renders correctly without scripting. */
+:root{
+  --wave-line:13;
+  --wave-amp:7;
+  --wave-cycles:2;
+  --wave:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40" preserveAspectRatio="none"><path d="M0,13 Q12.5,6 25,13 T50,13 T75,13 T100,13 L100,40 L0,40 Z" fill="black"/></svg>');
+}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
 body{
@@ -76,6 +94,10 @@ select#auth:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 .regchip{font-size:11px;letter-spacing:.08em;padding:4px 9px;border:1px solid var(--line);
   border-radius:99px;color:var(--muted);white-space:nowrap}
 .statline{font-size:12px;color:var(--muted)}
+.themebtn{font:12px system-ui;padding:5px 11px;border:1px solid var(--line);border-radius:99px;
+  background:var(--panel);color:var(--muted);cursor:pointer;white-space:nowrap}
+.themebtn:hover{border-color:var(--accent);color:var(--accent-ink)}
+.themebtn:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 
 /* ── toolbar ── */
 .toolbar{display:flex;gap:14px;align-items:center;padding:12px 0 10px;flex-wrap:wrap}
@@ -253,6 +275,7 @@ footer p{max-width:88ch;margin:0 0 6px}
     <select id="auth" aria-label="Select regulatory authority"></select>
     <span class="regchip" id="regchip"></span>
     <span class="statline" id="statline"></span>
+    <button id="themebtn" class="themebtn" type="button"></button>
   </div>
 </header>
 
@@ -2463,6 +2486,47 @@ for (const key of Object.keys(AUTH)){
 sel.value = "fcc";
 sel.addEventListener("change", () => build(sel.value));
 
+/* ── wordmark waterline ──
+   Redraws the --wave mask from the --wave-line / --wave-amp / --wave-cycles
+   tokens in the stylesheet, which are the only place those numbers live. */
+function buildWave(){
+  const root = document.documentElement;
+  const cs = getComputedStyle(root);
+  const num = (n, d) => { const v = parseFloat(cs.getPropertyValue(n)); return isFinite(v) ? v : d; };
+  const line = num("--wave-line", 13), amp = num("--wave-amp", 7);
+  const halves = Math.max(1, Math.round(Math.max(.5, num("--wave-cycles", 2)) * 2));
+  const seg = 100 / halves, r = n => Math.round(n * 100) / 100;
+  /* one quadratic hump, then reflect it across the rest of the word */
+  let d = "M0," + r(line) + " Q" + r(seg / 2) + "," + r(line - amp) + " " + r(seg) + "," + r(line);
+  for (let i = 1; i < halves; i++) d += " T" + r(seg * (i + 1)) + "," + r(line);
+  d += " L100,40 L0,40 Z";
+  root.style.setProperty("--wave",
+    "url('data:image/svg+xml;utf8,<svg xmlns=\"http://www.w3.org/2000/svg\" " +
+    "viewBox=\"0 0 100 40\" preserveAspectRatio=\"none\"><path d=\"" + d + "\" fill=\"black\"/></svg>')");
+}
+
+/* ── theme: auto → light → dark ── */
+const THEMES = ["auto", "light", "dark"];
+const THEME_FACE = { auto: "◐ Auto", light: "☀ Light", dark: "☾ Dark" };
+let themeMode = "auto";
+function applyTheme(mode, persist){
+  themeMode = THEMES.includes(mode) ? mode : "auto";
+  if (themeMode === "auto") delete document.documentElement.dataset.theme;
+  else document.documentElement.dataset.theme = themeMode;
+  const b = $("themebtn");
+  if (b){
+    b.textContent = THEME_FACE[themeMode];
+    const next = THEMES[(THEMES.indexOf(themeMode) + 1) % THEMES.length];
+    b.title = "Theme: " + THEME_FACE[themeMode].slice(2) + " — click for " + THEME_FACE[next].slice(2);
+    b.setAttribute("aria-label", b.title);
+  }
+  if (persist){ try { localStorage.setItem("spectra-theme", themeMode); } catch (e){ /* private mode */ } }
+  onTheme();
+}
+$("themebtn").addEventListener("click", () => {
+  applyTheme(THEMES[(THEMES.indexOf(themeMode) + 1) % THEMES.length], true);
+});
+
 /* ── theme reactivity ── */
 function onTheme(){
   readColors(); makePatterns(); renderMini(); requestRender();
@@ -2488,6 +2552,13 @@ resize();
   }
 }
 booting = false;
+buildWave();
+{
+  let saved = null;
+  try { saved = localStorage.getItem("spectra-theme"); } catch (e){ /* private mode */ }
+  /* an artifact host may already have stamped a theme — don't fight it */
+  applyTheme(saved || document.documentElement.dataset.theme || "auto", false);
+}
 window.addEventListener("resize", resize);
 new ResizeObserver(() => { if (strip.clientWidth !== W) resize(); }).observe(strip);
 </script>
