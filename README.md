@@ -4,6 +4,8 @@ An interactive, zoomable atlas of the radio spectrum (3 kHz – 300 GHz), modele
 NTIA *United States Frequency Allocations* wall chart. Single self-contained HTML page,
 no dependencies, no network calls.
 
+[Live Demo](https://lavalink.us/spectra)
+
 ![SPECTRA — the full 3 kHz – 300 GHz view, wrapped onto three rows](docs/screenshot.png)
 
 - **293 allocation bands** with stacked co-allocated ITU services (CAPITALS = primary,
