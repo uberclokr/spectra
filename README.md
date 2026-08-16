@@ -4,6 +4,8 @@ An interactive, zoomable atlas of the radio spectrum (3 kHz – 300 GHz), modele
 NTIA *United States Frequency Allocations* wall chart. Single self-contained HTML page,
 no dependencies, no network calls.
 
+![SPECTRA — the full 3 kHz – 300 GHz view, wrapped onto three rows](docs/screenshot.png)
+
 - **293 allocation bands** with stacked co-allocated ITU services (CAPITALS = primary,
   lowercase = secondary), nicknames, and educational notes.
 - **Five regulators**: FCC (default), Ofcom (UK), MIC (Japan), ACMA (Australia),
@@ -13,6 +15,15 @@ no dependencies, no network calls.
   jump chips, text + frequency search, service-family highlighting, ITU/IEEE band
   rulers, wavelength ruler, ISM and passive-quiet-band overlays.
 - Light and dark themes; colorblind-validated service palette.
+
+## Band detail
+
+Clicking a band opens an encyclopedia card: the co-allocated services and their
+primary/secondary status, a propagation-physics strip generated from the band's centre
+frequency (with a to-scale half-wave antenna), the protocols that live there — channel
+plans, modulation, waterfalls, frame anatomy — and a milestone timeline.
+
+![The 2.4 GHz ISM band detail card, showing Wi-Fi and Bluetooth protocol visuals](docs/screenshot-band-detail.png)
 
 ## Build
 
